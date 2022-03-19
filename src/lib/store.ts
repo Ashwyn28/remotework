@@ -32,4 +32,22 @@ function createFilter() {
 	}
 }
 
+function createHeight() {
+	const {subscribe, set, update} = writable({
+		default: 0,
+		updated: 0
+	});
+
+	return {
+		subscribe,
+		set,
+		update,
+		reset: () => update(self => {
+			self.updated = self.default;
+			return self;
+		})
+	}
+}
+
+export const height = createHeight();
 export const filter = createFilter();
