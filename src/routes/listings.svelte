@@ -5,7 +5,6 @@
 	export const load: Load = async () => {
 		const listings = await getListings('listings');
 		const premium = await getListings('api/premium/');
-
 		return {
 			props: { listings, premium }
 		};
@@ -31,6 +30,7 @@
 	}
 	let nextListings;
 
+	// FILTER IMPLEMENTATION
 	// store a static list of filters
 	// -> filter set needs to be one-to-one to all listing categories
 	// how to make sure this is always true
@@ -41,6 +41,9 @@
 		{ name: 'food', id: 1, type: 'engineering' },
 		{ name: 'American.', id: 1, type: 'engineering' }
 	];
+
+	// pagination fix: make sure pages gets loaded sequentially
+	// -> or set scrollY to top on reload
 
 	const handlePagination = async (scrollY) => {
 		if (!listings.next) {
@@ -81,6 +84,20 @@
 		height.reset();
 	}
 	$: handlePagination(scrollY);
+
+	// color control
+	// -> array of colours for premium listings
+	// color should be set by business
+	let colors = {
+		default: "bg-white",
+		amber: "bg-amber-100",
+		yellow: "bg-yellow-50",
+		lime: "bg-lime-50",
+		green: "bg-green-200",
+		emerald: "bg-emerald-50",
+		sky: "bg-sky-200",
+		rose: "bg-rose-200",
+	}
 </script>
 
 <svelte:window bind:scrollY />
@@ -98,7 +115,7 @@
 	<!-- Listings -->
 	{#each listings.results as listing}
 		<div class="py-2">
-			<Listing {listing} />
+			<Listing {listing} color={colors.sky} />
 		</div>
 	{/each}
 </div>
