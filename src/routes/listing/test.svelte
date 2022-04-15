@@ -53,3 +53,8 @@
 	/>
 	<button type="submit" disabled={isSubmitting}>Submit</button>
 </Form>
+
+
+<form action="http://127.0.0.1:8000/create-checkout-session/" method="POST">
+	<button type="submit">Checkout</button>
+</form>
