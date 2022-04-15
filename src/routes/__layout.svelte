@@ -16,9 +16,23 @@
 		flex-direction: column;
 		padding: 1rem;
 		width: 100%;
-		max-width: calc(100% - 88px);
+		max-width: calc(100% - 120px);
 		margin: 0 auto;
 		box-sizing: border-box;
 	}
+
+	@media only screen and (max-width: 428px) {
+		main {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			padding: 1rem;
+			width: 100%;
+			max-width: 100%;
+			margin: 0 auto;
+			box-sizing: border-box;
+		}
+	}
+
 
 </style>

@@ -1,5 +1,6 @@
 <script context="module" lang="ts">
 	import { filter } from '$lib/store';
+	import { setCategoryColor } from '$lib/colors';
 
 	const handleSelection = (name, id, type) => {
 		filter.isSelected(true);
@@ -7,7 +8,7 @@
 	};
 
 	const handleReset = () => {
-		filter.reset()
+		filter.reset();
 	};
 </script>
 
@@ -15,13 +16,21 @@
 	export let filters;
 </script>
 
-<div class="my-4 border-solid border-2 border-blue-500 px-4 py-2">
-	<div class="flex justify-between">
-		{#each filters as filter (filter)}
-			<button on:click={() => handleSelection(filter.name, filter.id, filter.type)}
-				>{filter.name}</button
-			>
-		{/each}
-		<button on:click={handleReset}>Reset</button>
+<div class="my-4 px-4 py-2">
+	<div class="flex">
+		<span>
+			{#each filters as filter (filter)}
+				<button
+					class={setCategoryColor(filter.name) + ' w-24 rounded-full text-center text-sm px-4 mx-2'}
+					on:click={() => handleSelection(filter.name, filter.id, filter.type)}
+					>{filter.name}</button
+				>
+			{/each}
+		</span>
+		<span class="ml-auto">
+			<button 
+			class="w-24 rounded-full text-center text-sm px-4 mx-2"
+			on:click={handleReset}>Reset</button>
+		</span>
 	</div>
 </div>
