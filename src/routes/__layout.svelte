@@ -5,7 +5,7 @@
 
 <Header />
 
-<main class="background-secondary">
+<main>
 	<slot />
 </main>
 
@@ -16,7 +16,7 @@
 		flex-direction: column;
 		padding: 1rem;
 		width: 100%;
-		max-width: calc(100% - 120px);
+		max-width: calc(100% - 15%);
 		margin: 0 auto;
 		box-sizing: border-box;
 	}

@@ -12,7 +12,7 @@
 			<p>404</p>
 		{/if}
 	</div>
-	<div class={"rounded-b flex flex-col h-48 md:w-48 " + setCategoryColor(listing.job_title) }>
+	<div class={"rounded-b flex flex-col h-48 md:w-48 "}>
 		<div class="truncate">{listing.job_title}</div>
 		<div class="truncate">{listing.description}</div>
 		<div class="mt-auto">

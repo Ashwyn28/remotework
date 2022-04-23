@@ -11,6 +11,12 @@
 	};
 </script>
 
+<!-- 
+	Todo:
+		-> payment logic
+		-> fulllisting UI
+		-> form UI
+ -->
 <script>
 	import Listing from '../components/listing.svelte';
 	import FeaturedListing from '../components/featuredListing.svelte';
@@ -32,13 +38,6 @@
 		});
 	}
 	let nextListings;
-
-	// FILTER IMPLEMENTATION
-	// store a static list of filters
-	// -> filter set needs to be one-to-one to all listing categories
-	// how to make sure this is always true
-	//  -> only have a specific set of categories (dropdown)
-	// from which you can choose
 
 	let filters = [
 		{ name: 'food', id: 1, type: 'engineering' },
@@ -95,10 +94,12 @@
 	// color should be set by business
 	let colors = {
 		default: 'bg-white',
+		secondary: 'background-secondary',
 		amber: 'bg-amber-100',
 		yellow: 'bg-yellow-50',
 		lime: 'bg-lime-50',
-		green: 'bg-green-200',
+		green: 'bg-beach-green',
+		gray: 'bg-light-sand-green',
 		emerald: 'bg-emerald-50',
 		sky: 'bg-sky-200',
 		rose: 'bg-rose-200'
@@ -109,10 +110,13 @@
 <div>
 	<!-- Premium listings (desktop)-->
 	{#if innerWidth >= mobileWidth}
+		<div class="flex">
+			<span class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline">New and Notable</span>
+		</div>
 		<div class="flex justify-between">
 			{#each premium.results as listing}
 				<span class="py-2">
-					<FeaturedListing {listing} color={colors.default} />
+					<FeaturedListing {listing} color={colors.gray} />
 				</span>
 			{/each}
 		</div>
@@ -123,14 +127,14 @@
 	{#if innerWidth <= mobileWidth}
 		{#each premium.results as listing}
 			<div class="py-2">
-				<Listing {listing} color={setCategoryColor(listing.job_title)} />
+				<Listing {listing} basicColor={setCategoryColor(listing.job_title) } />
 			</div>
 		{/each}
 	{/if}
 	<!-- Listings -->
 	{#each listings.results as listing}
 		<div class="py-2">
-			<Listing {listing} color={colors.default} />
+			<Listing {listing} basicColor={colors.gray} premiumColor={setCategoryColor(listing.job_title)} />
 		</div>
 	{/each}
 </div>

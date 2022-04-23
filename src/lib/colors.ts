@@ -1,35 +1,36 @@
 export const categoryColours = {
-	a: 'bg-teal-400',
-	b: 'bg-red-400',
-	c: 'bg-violet-400',
-	d: 'bg-amber-400',
-	e: 'bg-emerald-400',
-	f: 'bg-cyan-400',
-	g: 'bg-indigo-400',
-	h: 'bg-rose-400',
-	i: 'bg-pink-400',
-	j: 'bg-fuchsia-400',
-	k: 'bg-purple-400',
-	l: 'bg-blue-400',
-	m: 'bg-lime-400',
-	o: 'bg-yellow-400',
-	p: 'bg-orange-400',
-	q: 'bg-stone-400',
-	r: 'bg-neutral-400',
-	s: 'bg-zinc-400',
-	t: 'bg-gray-400',
-	u: 'bg-slate-400',
-	v: '',
-	w: '',
-	x: '',
-	y: '',
-	z: ''
+	a: 'bg-dark-tokyo-purple-01',
+	b: 'bg-dark-tokyo-purple-02',
+	c: 'bg-dark-tokyo-purple-03',
+	d: 'bg-dark-tokyo-purple-04',
+	e: 'bg-dark-tokyo-purple-05',
+	f: 'bg-dark-tokyo-purple-06',
+	g: 'bg-dark-tokyo-purple-07',
+	h: 'bg-dark-tokyo-purple-08',
+	i: 'bg-dark-tokyo-blue-01',
+	j: 'bg-light-tokyo-blue-02',
+	k: 'bg-dark-tokyo-blue-03',
+	l: 'bg-light-tokyo-blue-04',
+	m: 'bg-light-tokyo-blue-05',
+	n: 'bg-light-tokyo-blue-06',
+	o: 'bg-dark-tokyo-green-01',
+	p: 'bg-light-tokyo-green-02',
+	q: 'bg-dark-tokyo-green-03',
+	r: 'bg-dark-tokyo-green-04',
+	s: 'bg-light-tokyo-orange-01',
+	t: 'bg-dark-tokyo-orange-02',
+	u: 'bg-dark-tokyo-orange-03',
+	v: 'bg-dark-tokyo-pink-01',
+	w: 'bg-dark-tokyo-pink-02',
+	x: 'bg-dark-tokyo-pink-03',
+	y: 'bg-dark-tokyo-red-01',
+	z: 'bg-dark-tokyo-red-02',
 };
 
 export const setCategoryColor = (category) => {
 	const firstChar = category.charAt(0).toLowerCase();
 	if (!categoryColours[firstChar]) {
-		return 'bg-sky-400';
+		return 'bg-sky-300';
 	}
 	return categoryColours[firstChar];
 }
