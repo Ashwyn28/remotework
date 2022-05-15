@@ -15,6 +15,7 @@
 		display: flex;
 		flex-direction: column;
 		padding: 1rem;
+		padding-bottom: 4rem;
 		width: 100%;
 		max-width: calc(100% - 15%);
 		margin: 0 auto;

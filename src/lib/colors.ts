@@ -27,10 +27,19 @@ export const categoryColours = {
 	z: 'bg-dark-tokyo-red-02',
 };
 
-export const setCategoryColor = (category) => {
+export const setCategoryColor = (category: string, backound: boolean, border: boolean) => {
 	const firstChar = category.charAt(0).toLowerCase();
-	if (!categoryColours[firstChar]) {
-		return 'bg-sky-300';
+	if (backound) {
+		if (!categoryColours[firstChar]) {
+			return 'bg-sky-300';
+		}
+		return categoryColours[firstChar];
 	}
-	return categoryColours[firstChar];
+	if (border) {
+		if (!categoryColours[firstChar]) {
+			return 'border-sky-300';
+		}
+	
+		return `border-${categoryColours[firstChar]}`;
+	}
 }

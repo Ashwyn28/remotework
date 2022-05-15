@@ -25,16 +25,18 @@
 		<span>
 			{#each filters as filter (filter)}
 				<button
-					class={setCategoryColor(filter.name) + ' w-24 rounded text-center text-sm text-white px-4 mx-2'}
+					class={setCategoryColor(filter.name, true, false) +
+						' w-24 rounded text-center text-sm text-white px-4 mx-2'}
 					on:click={() => handleSelection(filter.name, filter.id, filter.type)}
 					>{filter.name}</button
 				>
 			{/each}
 		</span>
 		<span class="ml-auto">
-			<button 
-			class="w-24 rounded-full text-center text-beach-black text-base font-bold px-4 mx-2"
-			on:click={handleReset}>Reset</button>
+			<button
+				class="w-24 rounded-full text-center text-beach-black text-base font-bold px-4 mx-2"
+				on:click={handleReset}>Reset</button
+			>
 		</span>
 	</div>
 </div>

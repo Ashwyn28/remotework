@@ -19,7 +19,7 @@
  -->
 <script>
 	import Listing from '../components/listing.svelte';
-	import FeaturedListing from '../components/featuredListing.svelte';
+	import FeaturedListing from '../components/featuredListingv2.svelte';
 	import SelectFilter from '../components/filterSelect.svelte';
 	import { filter, height } from '$lib/store';
 	import { setCategoryColor } from '$lib/colors';
@@ -38,6 +38,7 @@
 		});
 	}
 	let nextListings;
+	let endOfListings = false;
 
 	let filters = [
 		{ name: 'food', id: 1, type: 'engineering' },
@@ -46,25 +47,16 @@
 		{ name: 'Morning.', id: 1, type: 'engineering' }
 	];
 
-	// pagination fix: make sure pages gets loaded sequentially
-	// -> or set scrollY to top on reload
+	const handlePagination = async () => {
+		if (!listings.next) return;
 
-	const handlePagination = async (scrollY) => {
-		if (!listings.next) {
-			return;
-		}
-		if (scrollY >= $height.updated - 200) {
-			// update listings
-			nextListings = await nextPage(listings.next);
-			nextListings.results.map((l) => {
-				listings.results.push(l);
-			});
-			nextListings.results = listings.results;
-			listings = nextListings;
-
-			// increment window height
-			$height.updated += $height.default;
-		}
+		// update listings
+		nextListings = await nextPage(listings.next);
+		nextListings.results.map((l) => {
+			listings.results.push(l);
+		});
+		nextListings.results = listings.results;
+		listings = nextListings;
 	};
 
 	const filterListings = async (filter) => {
@@ -76,6 +68,7 @@
 
 	const resetListings = async () => {
 		listings = await getListings('listings');
+		endOfListings = false;
 	};
 
 	// reactively update listings
@@ -85,9 +78,11 @@
 	}
 	$: if (!$filter.selected) {
 		resetListings();
-		height.reset();
 	}
-	$: handlePagination(scrollY);
+
+	$: if (!listings.next) {
+		endOfListings = true;
+	}
 
 	// color control
 	// -> array of colours for premium listings
@@ -111,7 +106,9 @@
 	<!-- Premium listings (desktop)-->
 	{#if innerWidth >= mobileWidth}
 		<div class="flex">
-			<span class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline">New and Notable</span>
+			<span class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline"
+				>New and Notable</span
+			>
 		</div>
 		<div class="flex justify-between">
 			{#each premium.results as listing}
@@ -127,14 +124,26 @@
 	{#if innerWidth <= mobileWidth}
 		{#each premium.results as listing}
 			<div class="py-2">
-				<Listing {listing} basicColor={setCategoryColor(listing.job_title) } />
+				<Listing {listing} basicColor={setCategoryColor(listing.job_title, true, false)} />
 			</div>
 		{/each}
 	{/if}
 	<!-- Listings -->
 	{#each listings.results as listing}
 		<div class="py-2">
-			<Listing {listing} basicColor={colors.gray} premiumColor={setCategoryColor(listing.job_title)} />
+			<Listing
+				{listing}
+				basicColor={colors.gray}
+				premiumColor={setCategoryColor(listing.job_title, true, false)}
+			/>
 		</div>
 	{/each}
+	<div class="pt-6 flex justify-end px-4">
+		{#if !endOfListings}
+			<button
+				class="rounded-full text-center text-beach-black text-base font-bold px-4 mx-2"
+				on:click={handlePagination}>Next Page</button
+			>
+		{/if}
+	</div>
 </div>
