@@ -3,6 +3,7 @@
 	export let basicColor = null;
 	export let premiumColor = null;
 	import { setCategoryColor } from '$lib/colors';
+	import { page } from '$app/stores';
 
 	let showFullListing = false;
 	let setTextWhite = false;
@@ -61,11 +62,16 @@
 						</span>
 					</div>
 				</div>
-				<div class="flex flex-col justify-center">
-					<button
-						class="px-4 py-1 bg-red-500 text-white hover:text-red-500 hover:bg-white rounded invisible sm:visible text-lg font-semibold hover:ring-2 hover:ring-red-500"
-						>Apply</button
-					>
+				<div
+					class="flex flex-col justify-center"
+				>
+					<a href={listing.application_url}>
+						<button
+							class="px-4 py-1 bg-red-500 text-white hover:text-red-500 hover:bg-white rounded invisible sm:visible text-lg font-semibold hover:ring-2 hover:ring-red-500"
+						>
+							Apply
+						</button>
+					</a>
 				</div>
 			</div>
 		</div>

@@ -2,6 +2,11 @@ import type { EndpointOutput } from '@sveltejs/kit';
 
 const BASE = 'http://127.0.0.1:8000';
 
+/**
+ * create generic get fetch call
+ * @param {string} resource 
+ * @returns {Promise<EndpointOutput>}
+ */
 export const get = async (resource: string): Promise<EndpointOutput> => {
     try {
         const res = await fetch(`${BASE}/${resource}`, {
@@ -17,6 +22,11 @@ export const get = async (resource: string): Promise<EndpointOutput> => {
     }
 }
 
+/**
+ * paginated listings 
+ * @param {string} resource 
+ * @returns {Promise<EndpointOutput>}
+ */
 export const getListings = async (resource: string): Promise<EndpointOutput> => {
     try {
         const res = await get(resource);
@@ -26,6 +36,11 @@ export const getListings = async (resource: string): Promise<EndpointOutput> => 
     }
 }
 
+/**
+ * goto next page in paginated list api view
+ * @param {string} resource 
+ * @returns {Promise<EndpointOutput>}
+ */
 export const nextPage = async (resource: string): Promise<EndpointOutput> => {
     try {
         const res = await fetch(resource, {
@@ -41,6 +56,16 @@ export const nextPage = async (resource: string): Promise<EndpointOutput> => {
     }
 }
 
+/**
+ * post/add a listing by passing the following data;
+ * { 
+ *  'company_name', 'job_title', 'description', 
+ *  'category', 'salary', 'region',  
+ *  'profile_url', 'application_url' 
+ * }
+ * @param {string} resource 
+ * @param {JSON} data 
+ */
 export const createListing = async (resource: string, data: JSON): Promise<EndpointOutput> => {
     try {
         const res = await fetch(resource, {

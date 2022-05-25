@@ -3,7 +3,7 @@
 // Sign in to see your own test API key embedded in code samples.
 const stripe = Stripe("pk_test_51KorhFFA3gFfYKpYx1kR9OQhFvzsOPOVuCEwop5nRfug8OI8HBk0W6ovZBsNBnar7b6SyGc80Ei6a983cXZOYDrf00Mv6DLJ3o");
 // The items the customer wants to buy
-const items = [{ id: 'xl-tshirt' }];
+const items = [{ id: 'basic' }];
 
 let elements;
 

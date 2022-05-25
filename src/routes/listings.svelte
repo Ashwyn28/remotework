@@ -21,12 +21,28 @@
 	import Listing from '../components/listing.svelte';
 	import FeaturedListing from '../components/featuredListingv2.svelte';
 	import SelectFilter from '../components/filterSelect.svelte';
-	import { filter, height } from '$lib/store';
+	import { filter, height, filters } from '$lib/store';
 	import { setCategoryColor } from '$lib/colors';
 	import { browser } from '$app/env';
 
 	export let listings;
 	export let premium;
+
+	// color control
+	// -> array of colours for premium listings
+	// color should be set by business
+	let colors = {
+		default: 'bg-white',
+		secondary: 'background-secondary',
+		amber: 'bg-amber-100',
+		yellow: 'bg-yellow-50',
+		lime: 'bg-lime-50',
+		green: 'bg-beach-green',
+		gray: 'bg-light-sand-green',
+		emerald: 'bg-emerald-50',
+		sky: 'bg-sky-200',
+		rose: 'bg-rose-200'
+	};
 
 	const mobileWidth = 428;
 	let scrollY;
@@ -40,12 +56,12 @@
 	let nextListings;
 	let endOfListings = false;
 
-	let filters = [
-		{ name: 'food', id: 1, type: 'engineering' },
-		{ name: 'American.', id: 1, type: 'engineering' },
-		{ name: 'Stuff.', id: 1, type: 'engineering' },
-		{ name: 'Morning.', id: 1, type: 'engineering' }
-	];
+	// handle api queries
+	//
+
+	const getFilters = async () => {
+		return await filters;
+	};
 
 	const handlePagination = async () => {
 		if (!listings.next) return;
@@ -71,7 +87,11 @@
 		endOfListings = false;
 	};
 
-	// reactively update listings
+	const filters_ = getFilters();
+
+	// update queries reactively e.g on event/store change
+	//
+
 	$: if ($filter.selected) {
 		filterListings($filter);
 		height.reset();
@@ -83,22 +103,6 @@
 	$: if (!listings.next) {
 		endOfListings = true;
 	}
-
-	// color control
-	// -> array of colours for premium listings
-	// color should be set by business
-	let colors = {
-		default: 'bg-white',
-		secondary: 'background-secondary',
-		amber: 'bg-amber-100',
-		yellow: 'bg-yellow-50',
-		lime: 'bg-lime-50',
-		green: 'bg-beach-green',
-		gray: 'bg-light-sand-green',
-		emerald: 'bg-emerald-50',
-		sky: 'bg-sky-200',
-		rose: 'bg-rose-200'
-	};
 </script>
 
 <svelte:window bind:scrollY bind:innerWidth />
@@ -119,7 +123,9 @@
 		</div>
 	{/if}
 	<!-- Filters -->
-	<SelectFilter {filters} />
+	{#await filters_ then filters}
+		<SelectFilter {filters} />
+	{/await}
 	<!-- Premium listings (mobile) -->
 	{#if innerWidth <= mobileWidth}
 		{#each premium.results as listing}

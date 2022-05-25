@@ -23,5 +23,6 @@
 	<Input name="region" label="job region" value="London" />
 	<Input name="website" label="job website" value="" />
 	<Input name="profile_url" label="Profile Image Link" value="" />
+	<Input name="application_url" label="Application Link" value="" />
 	<button type="submit" disabled={isSubmitting}>Submit</button>
 </Form>
