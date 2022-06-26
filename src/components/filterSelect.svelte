@@ -18,7 +18,7 @@
 
 <div class="my-4 px-4 pb-2 pt-6">
 	<div class="flex">
-		<button class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline">Jobs</button>
+		<button class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline dark:text-white">Jobs</button>
 		<button class="py-4 font-bold text-slate-400 text-xl hover:underline">Companies</button>
 	</div>
 	<div class="flex">
@@ -34,7 +34,7 @@
 		</span>
 		<span class="ml-auto">
 			<button
-				class="w-24 rounded-full text-center text-beach-black text-base font-bold px-4 mx-2"
+				class="w-24 rounded-full text-center text-beach-black text-base font-bold px-4 mx-2 dark:text-white"
 				on:click={handleReset}>Reset</button
 			>
 		</span>

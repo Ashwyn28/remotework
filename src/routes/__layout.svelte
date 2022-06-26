@@ -3,9 +3,8 @@
 	import '../app.css';
 </script>
 
-<Header />
-
-<main>
+<main class="dark:bg-slate-800">
+	<Header />
 	<slot />
 </main>
 
@@ -17,7 +16,8 @@
 		padding: 1rem;
 		padding-bottom: 4rem;
 		width: 100%;
-		max-width: calc(100% - 15%);
+		padding-left: 10%;
+		padding-right: 10%;
 		margin: 0 auto;
 		box-sizing: border-box;
 	}
@@ -34,6 +34,4 @@
 			box-sizing: border-box;
 		}
 	}
-
-
 </style>

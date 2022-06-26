@@ -90,8 +90,6 @@
 	const filters_ = getFilters();
 
 	// update queries reactively e.g on event/store change
-	//
-
 	$: if ($filter.selected) {
 		filterListings($filter);
 		height.reset();
@@ -103,6 +101,9 @@
 	$: if (!listings.next) {
 		endOfListings = true;
 	}
+
+	// TODO:
+	// only show listings that paid=successful
 </script>
 
 <svelte:window bind:scrollY bind:innerWidth />
@@ -110,7 +111,7 @@
 	<!-- Premium listings (desktop)-->
 	{#if innerWidth >= mobileWidth}
 		<div class="flex">
-			<span class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline"
+			<span class="text-beach-black py-4 font-bold text-xl mr-5 hover:underline dark:text-white"
 				>New and Notable</span
 			>
 		</div>
@@ -147,7 +148,7 @@
 	<div class="pt-6 flex justify-end px-4">
 		{#if !endOfListings}
 			<button
-				class="rounded-full text-center text-beach-black text-base font-bold px-4 mx-2"
+				class="rounded-full text-center text-beach-black text-base font-bold px-4 mx-2 dark:text-white"
 				on:click={handlePagination}>Next Page</button
 			>
 		{/if}

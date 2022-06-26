@@ -18,9 +18,9 @@
 	}
 </script>
 
-<div class={'rounded px-4 py-2 bg-light-sand-green'} on:click={handleSelection}>
+<div class='rounded px-4 py-2 bg-light-sand-green dark:bg-dark-beach-black' on:click={handleSelection}>
 	{#if showFullListing}
-		<div class="h-full">
+		<div class="h-full dark:text-white">
 			<div>
 				<img src={listing.profile_url} alt="profile url" />
 			</div>
@@ -39,19 +39,19 @@
 						{#if listing.profile_url}
 							<img src={listing.profile_url} alt="profile url" />
 						{:else}
-							<p>404</p>
+							<p class="dark:text-white">404</p>
 						{/if}
 					</div>
-					<div class="flex flex-col justify-center ml-10 ">
+					<div class="flex flex-col justify-center ml-10 dark:text-white">
 						<span class="text-sm sm:text-lg">{listing.company_name}</span>
 						<span class="font-semibold text-sm sm:text-lg">{listing.job_title}</span>
 					</div>
-					<div class="flex flex-col justify-center ml-10 ">
+					<div class="flex flex-col justify-center ml-10">
 						<span class="py-1">
 							<div class={' bg-slate-300 px-4 rounded text-center text-sm '}>$30K - 50K</div>
 						</span>
 					</div>
-					<div class="flex flex-col justify-center ml-5">
+					<div class="flex flex-col justify-center ml-5 dark:text-white">
 						<span class="py-1">
 							<div
 								class={setCategoryColor(listing.category, true, false) +
