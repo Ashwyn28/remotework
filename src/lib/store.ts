@@ -91,6 +91,7 @@ function createHeight() {
 function createPaymentStates() {
 	const { subscribe, set, update } = writable({
 		pageNum: 0,
+		state: 'not paid'
 	});
 
 	return {

@@ -52,8 +52,6 @@ async function handleSubmit(e) {
 	} else {
 		showMessage('An unexpected error occured.');
 	}
-
-	setLoading(false);
 }
 
 // Fetches the payment intent status after payment submission
@@ -67,7 +65,6 @@ async function checkStatus() {
 	}
 
 	const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
-
 	switch (paymentIntent.status) {
 		case 'succeeded':
 			showMessage('Payment succeeded!');

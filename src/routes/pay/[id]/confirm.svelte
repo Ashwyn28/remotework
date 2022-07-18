@@ -4,9 +4,13 @@
 	import Listing from '../../../components/listing.svelte';
 	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
+	import { currentPaidForListingId } from '$lib/store';
+	import { VIEWS } from '$lib/constants';
+	import { goto } from '$app/navigation';
 
 	const stripeUrl = 'https://js.stripe.com/v3/';
 	const checkoutUrl = '/Users/ashwynannauth/remotework/src/routes/pay/checkout.js';
+
 	let listing;
 
 	paymentStates.setWithLocalStorage({ pageNum: 2 });
@@ -15,12 +19,16 @@
 		const params = new URLSearchParams({
 			pk: $page.params.id
 		});
-		listing = await getListings('listings/?' + params.toString());
+		if ($page.params.id == currentPaidForListingId.subscribeToLocalStorage()) {
+			listing = await getListings('listings/?' + params.toString());
+		} else {
+			alert('Forbidden. User does not have to this page.');
+			goto(VIEWS[4]);
+		}
 	});
 
 	// need to check that listing object has been created
 	// then update the state and show stripe payment intent
-
 	// how to check that listing is being created
 	// need to add states to the listing model
 	// created
@@ -28,8 +36,8 @@
 	// paid
 
 	// TODO:
-	// prevent viewing of other lisitngs
-	
+	// prevent viewing of other lisitngs - done
+	// prevent paid listings from being viewed
 </script>
 
 <svelte:head>
@@ -37,6 +45,7 @@
 	<script src={checkoutUrl} defer></script>
 </svelte:head>
 
+<!-- {#if $page.params.id == currentPaidForListingId.subscribeToLocalStorage()} -->
 <div class="flex flex-col">
 	<div class="py-2">
 		{#if listing}
@@ -46,7 +55,7 @@
 	<div class="flex flex-row pt-12">
 		<div class="basis-3/4 rounded m-2">
 			<div class="p-4 dark:text-white">
-				<div class="font-bold">Breakdown</div>
+				<div class="font-bold">Breakpt</div>
 				<br />
 				<div class="pl-4">Price: £100</div>
 				<br />
@@ -59,7 +68,7 @@
 			>
 			<form id="payment-form">
 				<div id="payment-element">
-					<!--Stripe.js injects the Payment Element-->
+					<!--Stripe.js injects the Payment new new Element -->
 				</div>
 				<div class="pt-4">
 					<button
@@ -75,3 +84,4 @@
 		</div>
 	</div>
 </div>
+<!-- {/if} -->

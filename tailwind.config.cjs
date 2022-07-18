@@ -37,6 +37,7 @@ const config = {
 				"light-beach-green": "#AEC1B3",
 				"dark-beach-black": "#37454F",
 				"light-sand-green": "#F1F1E9",
+				"send-green": "#48bb78",
 			},
 			fontSize: {
 				"l": '1.0625rem'

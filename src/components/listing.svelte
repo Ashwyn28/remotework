@@ -4,11 +4,13 @@
 	export let premiumColor = null;
 	import { setCategoryColor } from '$lib/colors';
 	import { page } from '$app/stores';
+	import { slide, fade } from 'svelte/transition';
 
 	let showFullListing = false;
 	let setTextWhite = false;
 
 	const handleSelection = () => {
+		// flash apply button
 		showFullListing = !showFullListing;
 	};
 
@@ -18,9 +20,13 @@
 	}
 </script>
 
-<div class='rounded px-4 py-2 bg-light-sand-green dark:bg-dark-beach-black' on:click={handleSelection}>
+<div
+	class="rounded px-4 py-2 bg-light-sand-green dark:bg-dark-beach-black"
+	transition:fade
+	on:click={handleSelection}
+>
 	{#if showFullListing}
-		<div class="h-full dark:text-white">
+		<div class="h-full dark:text-white" transition:slide>
 			<div>
 				<img src={listing.profile_url} alt="profile url" />
 			</div>
@@ -62,12 +68,10 @@
 						</span>
 					</div>
 				</div>
-				<div
-					class="flex flex-col justify-center"
-				>
+				<div class="flex flex-col justify-center">
 					<a href={listing.application_url}>
 						<button
-							class="px-4 py-1 bg-red-500 text-white hover:text-red-500 hover:bg-white rounded invisible sm:visible text-lg font-semibold hover:ring-2 hover:ring-red-500"
+							class="px-4 py-1 bg-send-green text-white hover:text-send-green hover:bg-light-sand-green dark:hover:bg-dark-beach-black rounded invisible sm:visible text-lg font-semibold hover:ring-2 hover:ring-send-green"
 						>
 							Apply
 						</button>

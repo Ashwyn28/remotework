@@ -21,6 +21,7 @@
 	import Listing from '../components/listing.svelte';
 	import FeaturedListing from '../components/featuredListingv2.svelte';
 	import SelectFilter from '../components/filterSelect.svelte';
+	import Hero from "../components/hero.svelte";
 	import { filter, height, filters } from '$lib/store';
 	import { setCategoryColor } from '$lib/colors';
 	import { browser } from '$app/env';
@@ -108,6 +109,7 @@
 
 <svelte:window bind:scrollY bind:innerWidth />
 <div>
+	<Hero />
 	<!-- Premium listings (desktop)-->
 	{#if innerWidth >= mobileWidth}
 		<div class="flex">
