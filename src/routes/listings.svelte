@@ -5,29 +5,26 @@
 	export const load: Load = async () => {
 		const listings = await getListings('listings');
 		const premium = await getListings('api/premium/');
+		const companies = await getListings('companies');
 		return {
-			props: { listings, premium }
+			props: { listings, premium, companies }
 		};
 	};
 </script>
 
-<!-- 
-	Todo:
-		-> payment logic
-		-> fulllisting UI
-		-> form UI
- -->
 <script>
-	import Listing from '../components/listing.svelte';
+	import { browser } from '$app/env';
+	import { setCategoryColor } from '$lib/colors';
+	import { filter, filters, height } from '$lib/store';
+	import CompanyListing from '../components/companyListing.svelte';
 	import FeaturedListing from '../components/featuredListingv2.svelte';
 	import SelectFilter from '../components/filterSelect.svelte';
-	import Hero from "../components/hero.svelte";
-	import { filter, height, filters } from '$lib/store';
-	import { setCategoryColor } from '$lib/colors';
-	import { browser } from '$app/env';
+	import Hero from '../components/hero.svelte';
+	import Listing from '../components/listing.svelte';
 
 	export let listings;
 	export let premium;
+	export let companies;
 
 	// color control
 	// -> array of colours for premium listings
@@ -57,9 +54,6 @@
 	let nextListings;
 	let endOfListings = false;
 
-	// handle api queries
-	//
-
 	const getFilters = async () => {
 		return await filters;
 	};
@@ -88,6 +82,7 @@
 		endOfListings = false;
 	};
 
+	let view = 'listings';
 	const filters_ = getFilters();
 
 	// update queries reactively e.g on event/store change
@@ -103,8 +98,10 @@
 		endOfListings = true;
 	}
 
-	// TODO:
-	// only show listings that paid=successful
+	// TODO
+	// ----
+	// create companies component -- done
+	// add pagination to companies section
 </script>
 
 <svelte:window bind:scrollY bind:innerWidth />
@@ -127,7 +124,11 @@
 	{/if}
 	<!-- Filters -->
 	{#await filters_ then filters}
-		<SelectFilter {filters} />
+		<SelectFilter
+			{filters}
+			on:showCompanies={() => (view = 'companies')}
+			on:showListings={() => (view = 'listings')}
+		/>
 	{/await}
 	<!-- Premium listings (mobile) -->
 	{#if innerWidth <= mobileWidth}
@@ -138,15 +139,24 @@
 		{/each}
 	{/if}
 	<!-- Listings -->
-	{#each listings.results as listing}
-		<div class="py-2">
-			<Listing
-				{listing}
-				basicColor={colors.gray}
-				premiumColor={setCategoryColor(listing.job_title, true, false)}
-			/>
-		</div>
-	{/each}
+	{#if view == 'listings'}
+		{#each listings.results as listing}
+			<div class="py-2">
+				<Listing
+					{listing}
+					basicColor={colors.gray}
+					premiumColor={setCategoryColor(listing.job_title, true, false)}
+				/>
+			</div>
+		{/each}
+	{/if}
+	{#if view == 'companies'}
+		{#each companies.results as company}
+			<div class="py-2">
+				<CompanyListing {company} />
+			</div>
+		{/each}
+	{/if}
 	<div class="pt-6 flex justify-end px-4">
 		{#if !endOfListings}
 			<button

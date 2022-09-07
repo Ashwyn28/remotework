@@ -10,7 +10,7 @@
     >
       <div class="lg:group-hover:opacity-0 lg:group-hover:absolute">
         <span class="text-3xl sm:text-4xl" role="img" aria-hidden="true"></span>
-        <p class="mt-4 text-lg font-bold sm:text-xl text-black dark:text-white">{listing.company_name}</p>
+        <p class="mt-4 text-lg font-bold sm:text-xl text-black dark:text-white">{listing.company.name}</p>
       </div>
   
       <div

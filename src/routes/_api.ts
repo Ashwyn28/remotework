@@ -15,7 +15,45 @@ export const get = async (resource: string): Promise<EndpointOutput> => {
             }
         });
         if (res.ok) {
-            return await res.json();
+            return res.json();
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+/**
+ * create generic get fetch call
+ * @param {string} resource 
+ * @returns {Promise<EndpointOutput>}
+ */
+export const getAuth = async (resource: string, formattedToken: string): Promise<EndpointOutput> => {
+    try {
+        const res = await fetch(`${BASE}/${resource}`, {
+            headers: {
+                'content-type': 'application/json',
+                'Authorization': formattedToken
+            }
+        });
+        if (res.ok) {
+            return res.json();
+        }
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+export const post = async (resource: string, data: any): Promise<EndpointOutput> => {
+    try {
+        const res = await fetch(resource, {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        if (res.ok) {
+            return res.json();
         }
     } catch (error) {
         console.log(error)
@@ -68,18 +106,37 @@ export const nextPage = async (resource: string): Promise<EndpointOutput> => {
  */
 export const createListing = async (resource: string, data: JSON): Promise<EndpointOutput> => {
     try {
-        const res = await fetch(resource, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-        if (res.ok) {
-            return res.json()
-        }
+        const res = await post(resource, data)
+        return res;
     } catch (error) {
         console.log(error)
     }
 }
 
+/**
+ * validate google jwt  
+ * @param {string} token 
+ * @returns 
+ */
+export const authToken = async (resource: string, token: string): Promise<EndpointOutput> => {
+    try {
+        const res = await post(resource, token)
+        return res;
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+/**
+ * get user  
+ * @param {string} resource 
+ * @returns 
+ */
+export const user = async (resource: string, formattedToken: string): Promise<EndpointOutput> => {
+    try {
+        const res = await getAuth(resource, formattedToken)
+        return res;
+    } catch (error) {
+        console.log(error)
+    }
+}

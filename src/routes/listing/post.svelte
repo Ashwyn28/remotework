@@ -1,16 +1,38 @@
 <script>
-	import { createListing } from '../_api';
-	import { Form, Input, Select, Choice } from 'sveltejs-forms';
 	import { currentPaidForListingId } from '$lib/store';
+	import { Form, Input, Select } from 'sveltejs-forms';
+	import { createListing } from '../_api';
 
 	async function handleSubmit({ detail: { values } }) {
-		console.log(values);
-		let listing = await createListing('http://127.0.0.1:8000/create/', values);
+		const data = {
+			company: 1,
+			job_title: values.job_title,
+			description: values.description,
+			category: values.category,
+			salary: values.salary,
+			region: values.region,
+			website: values.website,
+			profile_url: values.profile_url,
+			application_url: values.application_url
+		};
+		let listing = await createListing('http://127.0.0.1:8000/create/', data);
 		if (listing) {
 			currentPaidForListingId.setWithLocalStorage({ id: listing.id });
 			window.location.assign('http://localhost:3000/pay/' + listing.id + '/confirm');
 		}
 	}
+
+	// TODO:
+	// need to add a register company listing
+	// -> create business account
+	// -> form for company information
+	// 	-> goto listing form
+	// 		-> choose option one listing or bundle deal
+	// 			-> bundle deal redirects to business dashbaord
+	// 		-> create first listing
+	// 			-> on pay screen have the option to buy bundle deal (discounted prices)
+	// 	-> goto business dashboard
+	// 		-> add listing from dashboard
 
 	// TODO:
 	// validation!!
@@ -24,7 +46,7 @@
 <div class="flex flex-row-reverse">
 	<div class="basis-1/2 form-background">
 		<Form let:isSubmitting on:submit={handleSubmit}>
-			<Input name="company_name" label="company name" value="" />
+			<Input name="company" label="company name" value="" />
 			<Input name="job_title" label="job title" value="Software Developer" />
 			<Input name="description" label="job description" value="" />
 			<Select name="category" label="job category" options={categories} value="" />
