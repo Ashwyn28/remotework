@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { getListings } from '../routes/_api';
+import { getListings } from '../legacy-employer/routes/_api';
 import { browser } from "$app/env";
 
 interface FilterCategory {
@@ -51,15 +51,15 @@ function createFilter() {
 async function getAllFilters() {
 	const filters = [];
 	const listings = await getListings('listings');
-	if (listings.results) {
+	if (listings?.results) {
 		listings.results.map((l) => {
 			filters.push({
 				id: l.pk,
 				name: l.category
 			});
 		});
-		return filters;
 	}
+	return filters;
 }
 
 function createHeight() {

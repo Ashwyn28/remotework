@@ -23,13 +23,19 @@
 	</div>
 	<div class="p-2 grid grid-cols-5">
 		<span class="py-1 px-2">
-			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>London, UK</div>
+			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>
+				London, UK
+			</div>
 		</span>
-        <span class="py-1 px-2">
-			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>10 people</div>
+		<span class="py-1 px-2">
+			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>
+				10 people
+			</div>
 		</span>
-        <span class="py-1 px-2">
-			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>Information Technology</div>
+		<span class="py-1 px-2">
+			<div class={'border-2 border-slate-300 dark:border-black px-4 rounded text-center text-sm '}>
+				Information Technology
+			</div>
 		</span>
 	</div>
 	{#each company.listings as listing}

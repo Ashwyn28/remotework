@@ -1,3 +1,6 @@
+<script>
+</script>
+
 <svelte:head>
 	<script src="https://accounts.google.com/gsi/client" async defer></script>
 	<script>
@@ -20,6 +23,7 @@
 				document.getElementById('buttonDiv'),
 				{ theme: 'outline', size: 'large' } // customization attributes
 			);
+			debugger;
 			google.accounts.id.prompt(); // also display the One Tap dialog
 		};
 	</script>

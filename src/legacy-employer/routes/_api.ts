@@ -1,6 +1,14 @@
 import type { EndpointOutput } from '@sveltejs/kit';
+import { browser } from '$app/env';
 
-const BASE = 'http://127.0.0.1:8000';
+/**
+ * Where the API lives. The browser always uses this site's own /api path (proxied to Django
+ * in development, routed by Caddy in production), so sign-in cookies stay first-party.
+ * Server-side rendering calls Django directly; API_INTERNAL_URL overrides the address.
+ */
+const BASE = browser
+	? '/api'
+	: (typeof process !== 'undefined' && process.env.API_INTERNAL_URL) || 'http://127.0.0.1:8000/api';
 
 /**
  * create generic get fetch call
