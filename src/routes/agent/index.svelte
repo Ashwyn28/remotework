@@ -542,8 +542,39 @@
 
 	function contextNote(): string {
 		const search = briefChips(brief, companies).map((c) => c.label);
-		return `[Context] Current search: ${search.length ? search.join(', ') : 'none'}. Saved roles: ${saved.length}. Applied: ${applied.length}. CV on file: ${$profile ? 'yes' : 'no'}.`;
+		return `[Context] Current search: ${search.length ? search.join(', ') : 'none'}. Saved roles: ${saved.length}. Applied: ${applied.length}. ${profileNote()}`;
 	}
+
+	/**
+	 * The application profile as the model sees it: the form answers, and only whether contact
+	 * details are on file. Their values and the CV text stay in the browser.
+	 */
+	function profileNote(): string {
+		const p = $profile;
+		if (!p) return 'Application profile: none yet (no CV uploaded).';
+		const contact = (['name', 'email', 'phone', 'location', 'linkedin'] as const)
+			.map((k) => `${k} ${p[k] ? 'set' : 'missing'}`)
+			.join(', ');
+		const answers = QUESTIONS.filter((q) => !['name', 'email', 'phone', 'location'].includes(q.key))
+			.map((q) => `${q.label}: ${q.known(p) ? q.show(p) || 'skipped' : 'not asked yet'}`)
+			.join('; ');
+		return `Application profile from ${p.cvName}: ${contact}. ${answers}.`;
+	}
+
+	/** update_profile fields → where they live on the profile */
+	const PROFILE_FIELDS: Record<string, { key: string; answer: boolean; contact?: boolean; yesNo?: boolean }> = {
+		name: { key: 'name', answer: true, contact: true },
+		email: { key: 'email', answer: true, contact: true },
+		phone: { key: 'phone', answer: true, contact: true },
+		location: { key: 'location', answer: true, contact: true },
+		linkedin: { key: 'linkedin', answer: false, contact: true },
+		portfolio: { key: 'portfolio', answer: true, contact: true },
+		right_to_work: { key: 'rightToWork', answer: true, yesNo: true },
+		needs_sponsorship: { key: 'sponsorship', answer: true, yesNo: true },
+		notice_period: { key: 'notice', answer: true },
+		salary_expectation: { key: 'salary', answer: true },
+		work_setup: { key: 'setup', answer: true }
+	};
 
 	/**
 	 * Run one turn through the model. Returns false when the model could not be reached before
@@ -738,6 +769,36 @@
 			update(msg, { proposal: { kind: 'watch', brief, summary, status: 'pending' } });
 			done('asked to confirm');
 			return { text: `A card asking the person to confirm a daily watch for "${summary}" is shown.` };
+		}
+
+		if (name === 'update_profile') {
+			const field = PROFILE_FIELDS[String(input.field)];
+			let value = String(input.value ?? '').trim().slice(0, 200);
+			if (!field || !value) {
+				done('unknown field');
+				return { text: 'Unknown field or empty value.', error: true };
+			}
+			if (!$profile) {
+				done('no profile');
+				return { text: 'There is no profile yet: the person needs to upload a CV first.', error: true };
+			}
+			if (field.yesNo) {
+				if (/^(y|yes|true)\b/i.test(value)) value = 'Yes';
+				else if (/^(n|no|false)\b/i.test(value)) value = 'No';
+				else {
+					done('needs yes or no');
+					return { text: 'This field takes Yes or No.', error: true };
+				}
+			}
+			const p = $profile;
+			const next: Profile = { ...p, answers: { ...p.answers } };
+			if (field.contact) (next as unknown as Record<string, string>)[field.key] = value;
+			if (field.answer) next.answers[field.key] = value;
+			profile.set(next);
+			update(msg, { profileCard: next });
+			done(`${String(input.field)} updated`);
+			// contact details go back as "updated" only, so their values never reach the model
+			return { text: field.contact ? `Updated ${String(input.field)}. The person can see the new profile.` : `Updated ${String(input.field)} to ${value}. The person can see the new profile.` };
 		}
 
 		if (name === 'apply_to_jobs') {
