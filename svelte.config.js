@@ -15,6 +15,19 @@ const config = {
 		vite: {
 			server: {
 				proxy: {
+					// The chat agent: by default the deployed one, so local development needs no
+					// Anthropic credentials. It only answers requests from the site's origin, so
+					// the proxy presents that. Set AGENT_API=http://127.0.0.1:8787 to use the local
+					// dev server instead (which calls Claude with this machine's ANTHROPIC_API_KEY).
+					// Listed before '/api' so it wins.
+					'/api/agent': {
+						target: process.env.AGENT_API || 'https://jobs.orbbits.io',
+						changeOrigin: true,
+						configure: (proxy) => {
+							if (!process.env.AGENT_API)
+								proxy.on('proxyReq', (req) => req.setHeader('origin', 'https://jobs.orbbits.io'));
+						}
+					},
 					// the same paths CloudFront routes in production, served by
 					// `python -m jobapi.devserver` in the backend repo
 					'/api': { target: 'http://127.0.0.1:8787', changeOrigin: false },

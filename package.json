@@ -50,6 +50,7 @@
 		"@fontsource/sura": "^4.5.4",
 		"@lukeed/uuid": "^2.0.0",
 		"cookie": "^0.4.1",
+		"pdfjs-dist": "^3.11.174",
 		"sass": "^1.53.0",
 		"svelte-forms": "^2.3.0",
 		"svelte-swiper": "^1.0.1",

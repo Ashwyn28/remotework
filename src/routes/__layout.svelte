@@ -10,11 +10,13 @@
 	import '../app.css';
 
 	// /match is the questions page itself; /login and /account are about the visitor, not listings
-	const UNGATED = ['/match', '/login', '/account'];
+	const UNGATED = ['/match', '/login', '/account', '/agent'];
 
 	onMount(startAccount);
 
 	$: path = $page.url.pathname;
+	// the agent demo is a full-screen app with its own chrome and its own way of asking questions
+	$: bare = path === '/agent' || path.startsWith('/agent/');
 	$: gated = !UNGATED.some((p) => path === p || path.startsWith(`${p}/`));
 	$: onboarded = isOnboarded($preferences);
 </script>
@@ -25,6 +27,9 @@
 	{/if}
 </svelte:head>
 
+{#if bare}
+	<slot />
+{:else}
 <div class="flex flex-1 flex-col bg-slate-50 dark:bg-slate-800">
 	<main class="mx-auto w-full max-w-5xl px-4 pb-28 sm:px-6 sm:pb-16">
 		<Header />
@@ -40,3 +45,4 @@
 		{/if}
 	</main>
 </div>
+{/if}
