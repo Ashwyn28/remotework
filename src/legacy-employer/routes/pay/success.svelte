@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { paymentStates, currentPaidForListingId } from '$lib/store';
-	import { onMount } from 'svelte';
 	import { VIEWS } from '$lib/constants';
+	import { currentPaidForListingId, paymentStates } from '$lib/store';
 	import { goto } from '$lib/utils';
+	import { onMount } from 'svelte';
 
 	const pageNum = parseInt(paymentStates.subscribeToLocalStorage());
 	const stripeUrl = 'https://js.stripe.com/v3/';
@@ -36,6 +36,7 @@
 						}
 					);
 					await response.json();
+					debugger;
 					paymentStates.set({ pageNum: 3, state: 'succeeded' });
 					break;
 				case 'processing':

@@ -54,33 +54,17 @@ body::before {
 	background-color: #ffffff;
 }
 /* #eef2f5; */
-h1,
-h2,
-p {
-	font-weight: 400;
-	color: var(--heading-color);
-}
 
 p {
 	line-height: 1.5;
 }
 
 a {
-	color: var(--accent-color);
 	text-decoration: none;
 }
 
 a:hover {
 	text-decoration: underline;
-}
-
-h1 {
-	font-size: 2rem;
-	text-align: center;
-}
-
-h2 {
-	font-size: 1rem;
 }
 
 pre {
@@ -104,12 +88,6 @@ button:focus:not(:focus-visible) {
 	outline: none;
 }
 
-@media (min-width: 720px) {
-	h1 {
-		font-size: 2.4rem;
-	}
-}
-
 @tailwind components;
 
 @tailwind utilities;
@@ -125,4 +103,25 @@ button:focus:not(:focus-visible) {
 
 .greenblue-ocean {
 	color: #68B2B1;
+}
+/* --- Mobile helpers ------------------------------------------------------------------- */
+
+/* sideways-scrolling rows of chips: swipeable, without a scrollbar in the way */
+.no-scrollbar {
+	scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+@media (max-width: 639px) {
+	/* fade the right edge of a sideways row, so it is clear there is more to swipe to */
+	.fade-right {
+		-webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+		mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+	}
+	/* keep bars clear of the iPhone home indicator */
+	.pb-safe {
+		padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+	}
 }

@@ -3,8 +3,7 @@
 	export let basicColor = null;
 	export let premiumColor = null;
 	import { setCategoryColor } from '$lib/colors';
-	import { page } from '$app/stores';
-	import { slide, fade } from 'svelte/transition';
+	import { fade, slide } from 'svelte/transition';
 
 	let showFullListing = false;
 	let setTextWhite = false;
@@ -31,7 +30,7 @@
 				<img src={listing.profile_url} alt="profile url" />
 			</div>
 			<div>{listing.job_title}</div>
-			<div>{listing.company_name}</div>
+			<div>{listing.company.name}</div>
 			<div>{listing.description}</div>
 			<div>{listing.category}</div>
 			<div>{listing.salary}</div>
@@ -49,7 +48,7 @@
 						{/if}
 					</div>
 					<div class="flex flex-col justify-center ml-10 dark:text-white">
-						<span class="text-sm sm:text-lg">{listing.company_name}</span>
+						<span class="text-sm sm:text-lg">{listing.company.name}</span>
 						<span class="font-semibold text-sm sm:text-lg">{listing.job_title}</span>
 					</div>
 					<div class="flex flex-col justify-center ml-10">

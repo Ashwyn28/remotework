@@ -1,38 +1,23 @@
 <script>
-	import { createListing } from '../_api';
-	import { Form, Input, Select, Choice } from 'sveltejs-forms';
-	import { currentPaidForListingId } from '$lib/store';
+	import { Form, Input, Select } from 'sveltejs-forms';
 
-	async function handleSubmit({ detail: { values } }) {
-		console.log(values);
-		let listing = await createListing('http://127.0.0.1:8000/create/', values);
-		if (listing) {
-			currentPaidForListingId.setWithLocalStorage({ id: listing.id });
-			window.location.assign('http://localhost:3000/pay/' + listing.id + '/confirm');
-		}
-	}
-
-	// TODO:
-	// validation!!
-
-	const categories = [
-		{ id: 1, title: 'engineering' },
-		{ id: 2, title: 'software' }
-	];
+	const handleSubmit = async ({ detail: { values } }) => {};
+	const categories = [{ id: 1, title: '' }];
 </script>
 
+<div
+	id="g_id_onload"
+	data-client_id="601837645469-i46geu02ca7rthamniuehgkp5ithjbl9.apps.googleusercontent.com"
+	data-login_uri="http://localhost:3000/business/dashboard"
+	data-native_login_uri="http://localhost:3000/business/create"
+/>
 <div class="flex flex-row-reverse">
 	<div class="basis-1/2 form-background">
 		<Form let:isSubmitting on:submit={handleSubmit}>
 			<Input name="company_name" label="company name" value="" />
-			<Input name="job_title" label="job title" value="Software Developer" />
-			<Input name="description" label="job description" value="" />
-			<Select name="category" label="job category" options={categories} value="" />
-			<div class="flex flex-row basis-1/2">
-				<Input name="salary" label="job salary" value="100" />
-				<Input name="region" label="job region" value="London" />
-			</div>
-			<Input name="website" label="job website" value="" />
+			<Input name="description" label="business description" value="" />
+			<Select name="category" label="business category" options={categories} value="" />
+			<Input name="website" label="business website" value="" />
 			<Input name="profile_url" label="Profile Image Link" value="" />
 			<Input name="application_url" label="Application Link" value="" />
 			<div class="buttons">
@@ -45,13 +30,6 @@
 
 <style>
 	.form-background {
-		background-color: #f8f8f8;
-		padding: 1rem;
-		border: 1px solid #ccc;
-		border-radius: 5px;
-	}
-
-	.sveltejs-forms {
 		background-color: #f8f8f8;
 		padding: 1rem;
 		border: 1px solid #ccc;
@@ -108,9 +86,5 @@
 	button[type='submit'] {
 		background-color: #48bb78;
 		width: 80px;
-	}
-
-	.debugger {
-		margin-top: 1rem;
 	}
 </style>

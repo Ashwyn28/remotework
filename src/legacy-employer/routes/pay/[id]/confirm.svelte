@@ -17,7 +17,8 @@
 
 	onMount(async () => {
 		const params = new URLSearchParams({
-			pk: $page.params.id
+			pk: $page.params.id,
+			state: $paymentStates.state
 		});
 		if ($page.params.id == currentPaidForListingId.subscribeToLocalStorage()) {
 			listing = await getListings('listings/?' + params.toString());
@@ -45,7 +46,6 @@
 	<script src={checkoutUrl} defer></script>
 </svelte:head>
 
-<!-- {#if $page.params.id == currentPaidForListingId.subscribeToLocalStorage()} -->
 <div class="flex flex-col">
 	<div class="py-2">
 		{#if listing}
@@ -68,7 +68,7 @@
 			>
 			<form id="payment-form">
 				<div id="payment-element">
-					<!--Stripe.js injects the Payment new new Element -->
+				<!--Stripe.js injects the Payment new new Element -->
 				</div>
 				<div class="pt-4">
 					<button
@@ -84,4 +84,3 @@
 		</div>
 	</div>
 </div>
-<!-- {/if} -->

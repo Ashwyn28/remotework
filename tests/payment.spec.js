@@ -1,5 +1,4 @@
-import { test, expect } from "@playwright/test";
-
+import { test } from "@playwright/test";
 
 const BASE_URL = "http://localhost:3000";
 const LANDING_PAGE = '/listings'
