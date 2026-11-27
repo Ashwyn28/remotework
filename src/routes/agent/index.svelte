@@ -1255,22 +1255,24 @@
 												{m.proposal.summary}
 											</p>
 										{/if}
-										<div class="mt-5 flex items-center gap-2">
+										<div class="mt-5 flex items-center gap-3">
 											{#if m.proposal.status === 'pending'}
 												<button
-													class="flex-1 rounded-lg bg-send-green py-2 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:ring-2"
+													class="btn3d btn3d-block flex-1 {m.proposal.kind === 'forget' ? 'btn3d-danger' : 'btn3d-primary'}"
 													on:click={() => decide(m, true)}
-													>{m.proposal.kind === 'save'
-														? 'Save'
-														: m.proposal.kind === 'apply'
-														? `Apply to ${m.proposal.apps.length}`
-														: m.proposal.kind === 'forget'
-														? 'Delete'
-														: 'Watch'}</button
+													><span
+														>{m.proposal.kind === 'save'
+															? 'Save'
+															: m.proposal.kind === 'apply'
+															? `Apply to ${m.proposal.apps.length}`
+															: m.proposal.kind === 'forget'
+															? 'Delete'
+															: 'Watch'}</span
+													></button
 												>
 												<button
-													class="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-													on:click={() => decide(m, false)}>Not now</button
+													class="btn3d btn3d-secondary btn3d-block flex-1"
+													on:click={() => decide(m, false)}><span>Not now</span></button
 												>
 											{:else}
 												<p class="text-sm text-slate-500 dark:text-slate-400">

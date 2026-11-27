@@ -106,8 +106,7 @@
 											target="_blank"
 											rel="noopener noreferrer"
 											on:click={() => setStatus(job.id, 'applied')}
-											class="rounded bg-send-green px-3 py-1 text-xs font-semibold text-white hover:no-underline hover:brightness-95"
-											>Apply ↗</a
+											class="btn3d btn3d-primary btn3d-sm"><span>Apply ↗</span></a
 										>
 									{/if}
 									<button

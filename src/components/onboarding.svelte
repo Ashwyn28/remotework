@@ -216,10 +216,10 @@
 			disabled={!answered}
 			class="{!current.required && !last
 				? ''
-				: 'ml-auto'} rounded-lg bg-send-green px-6 py-3 text-sm font-semibold text-white sm:px-5 sm:py-2 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+				: 'ml-auto'} btn3d btn3d-primary"
 			on:click={next}
 		>
-			{last ? 'Show my roles' : 'Continue'}
+			<span>{last ? 'Show my roles' : 'Continue'}</span>
 		</button>
 	</div>
 	{#if !answered}
