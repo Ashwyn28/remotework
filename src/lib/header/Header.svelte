@@ -4,6 +4,7 @@
 	import { tracked } from '$lib/personal';
 	import { account } from '$lib/account';
 	import { onMount } from 'svelte';
+	import Logo from '$lib/brand/Logo.svelte';
 
 	let darkMode = true;
 
@@ -59,11 +60,7 @@
 
 <header class="border-b border-slate-200 dark:border-slate-700 {onAgent ? '' : 'pb-2 sm:pb-3'}">
 	<div class="flex items-center gap-3 py-3">
-		<a
-			href="/"
-			class="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-900 hover:no-underline dark:text-white"
-			>orbbits <span class="text-send-green">job</span></a
-		>
+		<a href="/" class="hover:no-underline" aria-label="orbbits job, home"><Logo /></a>
 		<nav class="flex rounded-full bg-slate-200/70 p-0.5 dark:bg-slate-700" aria-label="View">
 			<a href="/" class={view(!onAgent)} aria-current={!onAgent ? 'page' : undefined}>Board</a>
 			<a href="/agent" class={view(onAgent)} aria-current={onAgent ? 'page' : undefined}>
