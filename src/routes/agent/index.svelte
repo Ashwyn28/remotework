@@ -2,9 +2,9 @@
 	import { browser } from '$app/env';
 	import { onMount, tick } from 'svelte';
 	import { fade, fly, slide } from 'svelte/transition';
-	import { ago, loadBoard, seniorityLabel, stageLabel } from '$lib/board';
+	import { ago, getCategory, isOnboarded, loadBoard, seniorityLabel, stageLabel } from '$lib/board';
 	import type { Company, Job } from '$lib/board';
-	import { setStatus, tracked } from '$lib/personal';
+	import { preferences, setStatus, tracked } from '$lib/personal';
 	import {
 		acknowledge,
 		applyChanges,
@@ -20,7 +20,6 @@
 		understand
 	} from '$lib/agent';
 	import type { Brief, Change, Hit, Step } from '$lib/agent';
-	import { cssVars, DARK, LIGHT } from '$lib/themes';
 	import {
 		answer,
 		EMPTY_PROFILE,
@@ -36,7 +35,7 @@
 	} from '$lib/profile';
 	import type { Application, Profile, Question } from '$lib/profile';
 	import Avatar from '../../components/avatar.svelte';
-	import SaveButton from '../../components/saveButton.svelte';
+	import JobCard from '../../components/jobCard.svelte';
 
 	type Status = 'pending' | 'sending' | 'done' | 'dismissed';
 	type Proposal =
@@ -97,25 +96,13 @@
 	let pendingApply: ApplyRequest | null = null;
 	let fileInput: HTMLInputElement;
 
-	// light or dark: the same saved choice as the main board's header, else the device setting
-	let dark = false;
-	$: palette = dark ? DARK : LIGHT;
-	$: if (browser) {
-		document.documentElement.classList.toggle('dark', dark);
-		document.querySelector('meta[name="theme-color"]')?.setAttribute('content', palette.bg);
-	}
-	function toggleTheme() {
-		dark = !dark;
-		localStorage.theme = dark ? 'dark' : 'light';
-	}
+	// phones show the board's tab bar along the bottom once the questions are answered
+	$: tabBar = isOnboarded($preferences);
 
 	let thread: HTMLElement;
 	let composer: HTMLTextAreaElement;
 
 	onMount(async () => {
-		dark =
-			localStorage.theme === 'dark' ||
-			(!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
 		const board = await loadBoard();
 		jobs = board.jobs;
 		companies = board.companies;
@@ -908,8 +895,6 @@
 			.map(([k, v]) => `${k}=${Array.isArray(v) ? `[${v.join(',')}]` : v}`)
 			.join(' ');
 
-	const facts = (j: Job) =>
-		[j.salary, seniorityLabel(j.seniority), j.arrangement || (j.mode ?? ''), j.region].filter(Boolean);
 
 	const COMPARE_ROWS: [string, (h: Hit) => string][] = [
 		['Match', (h) => `${h.score}%`],
@@ -937,6 +922,16 @@
 	$: applied = saved.filter((j) => $tracked[j.id]?.status === 'applied');
 	const stepLabel = (tool: string | undefined) => STEP_LABELS[tool ?? ''] ?? 'Working';
 
+	/** Industry and work-type chips keep the board's category colours. */
+	const chipClass = (c: Change): string =>
+		c.field === 'industries'
+			? getCategory(String(c.value), 'industry').chip
+			: c.field === 'workTypes'
+			? getCategory(String(c.value), 'work').chip
+			: c.field === 'excluded'
+			? 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-200'
+			: 'bg-slate-200/70 text-slate-700 dark:bg-slate-700 dark:text-slate-200';
+
 	$: lastAgent = [...messages].reverse().find((m): m is AgentMsg => m.role === 'agent') ?? null;
 </script>
 
@@ -944,93 +939,46 @@
 	<title>Agent · orbbits job</title>
 </svelte:head>
 
-<div
-	style={cssVars(palette)}
-	class="agent flex h-screen flex-col bg-ag-bg text-ag-text antialiased"
->
-	<!-- top bar: as quiet as possible -->
-	<header class="shrink-0">
-		<div class="mx-auto flex h-14 max-w-2xl items-center gap-4 px-5 text-sm">
-			<a href="/" class="font-semibold tracking-tight text-ag-text hover:no-underline"
-				>orbbits</a
-			>
-			<span class="text-ag-faint">/</span>
-			<span class="text-ag-muted">agent</span>
-			<div class="ml-auto flex items-center gap-1">
-				<button
-					class="flex h-8 w-8 items-center justify-center rounded-full text-ag-muted transition hover:bg-ag-surface hover:text-ag-text"
-					on:click={toggleTheme}
-					aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-					title={dark ? 'Light mode' : 'Dark mode'}
-				>
-					{#if dark}
-						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"
-							><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg
-						>
-					{:else}
-						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-							><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg
-						>
-					{/if}
-				</button>
-				<button
-					class="rounded-full px-3 py-1.5 text-ag-muted transition hover:bg-ag-surface hover:text-ag-text"
-					on:click={() => (briefOpen = !briefOpen)}
-					aria-expanded={briefOpen}
-					>Saved{#if saved.length}<span class="ml-1.5 tabular-nums text-ag-text"
-							>{saved.length}</span
-						>{/if}</button
-				>
-				<a
-					href="/"
-					class="rounded-full px-3 py-1.5 text-ag-muted transition hover:bg-ag-surface hover:text-ag-text hover:no-underline"
-					>Board</a
-				>
-			</div>
-		</div>
-	</header>
-
+<div class="flex min-h-0 flex-1 flex-col text-slate-800 dark:text-slate-100">
 	<!-- one continuous conversation -->
 	<section bind:this={thread} class="min-h-0 flex-1 overflow-y-auto">
-		<div class="mx-auto flex min-h-full max-w-2xl flex-col px-5 pb-6">
+		<div class="mx-auto flex min-h-full max-w-3xl flex-col px-4 pb-6 sm:px-6">
 			{#if !messages.length}
 				<div class="my-auto py-10" in:fade={{ duration: 200 }}>
-					<h1 class="text-[28px] font-semibold leading-tight tracking-tight">
+					<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
 						What are you looking for?
 					</h1>
-					<p class="mt-2 text-ag-muted">
+					<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
 						{#if ready && !offline}{jobs.length.toLocaleString()} open roles at {companies.length} top
 							UK tech companies, updated every morning.{:else if offline}The board is offline right
 							now.{:else}Loading the board…{/if}
 					</p>
-					<ul class="mt-8 -mx-3">
+					<ul class="mt-6 grid gap-3 sm:grid-cols-2">
 						{#each EXAMPLES as ex}
 							<li>
 								<button
-									class="group flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left transition hover:bg-ag-surface disabled:opacity-40"
+									class="group flex h-full w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left font-semibold text-slate-800 transition hover:border-send-green disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 									disabled={!ready}
 									on:click={() => send(ex)}
 								>
 									<span>{ex}</span>
 									<span
-										class="text-ag-faint transition group-hover:translate-x-0.5 group-hover:text-ag-text"
+										class="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-send-green"
 										aria-hidden="true">→</span
 									>
 								</button>
 							</li>
 						{/each}
-						<li>
+						<li class="sm:col-span-2">
 							<button
-								class="group flex w-full items-center justify-between rounded-2xl px-3 py-3 text-left transition hover:bg-ag-surface disabled:opacity-40"
+								class="group flex h-full w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left font-semibold text-slate-800 transition hover:border-send-green disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 								disabled={!ready}
 								on:click={() => fileInput.click()}
 							>
 								<span
 									>{$profile ? `Apply with ${$profile.cvName}` : 'Upload your CV to auto-apply'}</span
 								>
-								<span class="text-ag-faint transition group-hover:text-ag-text" aria-hidden="true"
-									>+</span
-								>
+								<span class="text-send-green" aria-hidden="true">+</span>
 							</button>
 						</li>
 					</ul>
@@ -1041,7 +989,7 @@
 						{#if m.role === 'user'}
 							<li class="flex justify-end" in:fly={{ y: 6, duration: 160 }}>
 								<p
-									class="max-w-[80%] rounded-3xl bg-ag-surface px-4 py-2.5 leading-6"
+									class="max-w-[80%] rounded-2xl rounded-br-md bg-dark-beach-black px-4 py-2.5 leading-6 text-white dark:bg-slate-700"
 								>
 									{m.text}
 								</p>
@@ -1055,7 +1003,7 @@
 									</p>
 								{:else if m.steps.length}
 									<button
-										class="flex items-center gap-1.5 text-sm text-ag-faint transition hover:text-ag-text"
+										class="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500 transition hover:text-slate-900 dark:hover:text-white"
 										on:click={() => {
 											m.traceOpen = !m.traceOpen;
 											messages = messages;
@@ -1076,13 +1024,13 @@
 								{#if m.traceOpen && m.shownSteps === m.steps.length && m.steps.length}
 									<ol
 										transition:slide={{ duration: 150 }}
-										class="space-y-1 border-l border-ag-line pl-4 font-mono text-xs text-ag-muted"
+										class="space-y-1 border-l border-slate-200 dark:border-slate-700 pl-4 font-mono text-xs text-slate-500 dark:text-slate-400"
 									>
 										{#each m.steps as s}
 											<li>
-												<span class="text-ag-text">{s.tool}</span>
+												<span class="text-slate-900 dark:text-white">{s.tool}</span>
 												{argText(s.args)}
-												<span class="block text-ag-faint">→ {s.result} · {s.ms}ms</span>
+												<span class="block text-slate-400 dark:text-slate-500">→ {s.result} · {s.ms}ms</span>
 											</li>
 										{/each}
 									</ol>
@@ -1093,8 +1041,8 @@
 								{/if}
 
 								{#if m.profileCard}
-									<div class="rounded-3xl bg-ag-surface p-5 text-sm">
-										<p class="flex items-center gap-2 text-ag-muted">
+									<div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 text-sm">
+										<p class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
 											<svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"
 												><path d="M5 2.5h6.5L15 6v11.5H5z" /><path d="M11.5 2.5V6H15" /></svg
 											>
@@ -1102,54 +1050,35 @@
 										</p>
 										<dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-4">
 											{#each profileRows(m.profileCard) as [label, value]}
-												<dt class="border-t border-ag-line py-2 text-ag-faint">{label}</dt>
-												<dd class="min-w-0 break-words border-t border-ag-line py-2">{value}</dd>
+												<dt class="border-t border-slate-200 dark:border-slate-700 py-2 text-slate-400 dark:text-slate-500">{label}</dt>
+												<dd class="min-w-0 break-words border-t border-slate-200 dark:border-slate-700 py-2">{value}</dd>
 											{/each}
 											{#each QUESTIONS.filter((q) => m.profileCard?.answers[q.key] && !['name', 'email', 'phone', 'location'].includes(q.key)) as q}
-												<dt class="border-t border-ag-line py-2 text-ag-faint">{q.label}</dt>
-												<dd class="border-t border-ag-line py-2">{m.profileCard.answers[q.key]}</dd>
+												<dt class="border-t border-slate-200 dark:border-slate-700 py-2 text-slate-400 dark:text-slate-500">{q.label}</dt>
+												<dd class="border-t border-slate-200 dark:border-slate-700 py-2">{m.profileCard.answers[q.key]}</dd>
 											{/each}
 										</dl>
 									</div>
 								{/if}
 
 								{#if m.hits.length}
-									<ul class="-mx-3">
+									<ul class="space-y-3">
 										{#each m.hits as h (h.job.id)}
-											<li
-												class="flex items-center gap-4 rounded-2xl px-3 py-3 transition hover:bg-ag-surface"
-												in:fly={{ y: 4, duration: 160 }}
-											>
-												<Avatar company={h.job.company} size="md" />
-												<a
-													href={h.job.applyUrl || `/company/${h.job.company.id}`}
-													target={h.job.applyUrl ? '_blank' : undefined}
-													rel="noopener noreferrer"
-													class="min-w-0 flex-1 text-inherit hover:no-underline"
-												>
-													<span class="block truncate font-medium">{h.job.title}</span>
-													<span class="block truncate text-sm text-ag-muted">
-														{[h.job.company.name, ...facts(h.job).slice(0, 3)].join(' · ')}
-													</span>
-													{#if h.reasons.length}
-														<span class="block truncate text-xs text-ag-faint">
-															{h.reasons.join(' · ')}
-														</span>
-													{/if}
-												</a>
-												{#if $tracked[h.job.id]?.status === 'applied'}
-													<span class="rounded-full bg-ag-chip px-2 py-0.5 text-xs text-ag-muted">Applied</span>
-												{:else if h.score >= 0}
-													<span class="text-sm tabular-nums text-ag-faint" title="Match">{h.score}</span>
+											<li in:fly={{ y: 4, duration: 160 }}>
+												<JobCard job={h.job} score={h.score >= 0 ? h.score : null} />
+												{#if h.reasons.length}
+													<p class="mt-1 px-1 text-xs text-slate-500 dark:text-slate-400">
+														<span class="font-semibold text-send-green">Why:</span>
+														{h.reasons.join(' · ')}
+													</p>
 												{/if}
-												<SaveButton jobId={h.job.id} />
 											</li>
 										{/each}
 									</ul>
 								{/if}
 
 								{#if m.compare.length >= 2}
-									<div class="overflow-x-auto rounded-3xl bg-ag-surface p-5">
+									<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
 										<div class="grid gap-x-4 text-sm" style="grid-template-columns: 5.5rem repeat({m.compare.length}, minmax(9rem, 1fr))">
 											<span />
 											{#each m.compare as h}
@@ -1159,11 +1088,11 @@
 												</span>
 											{/each}
 											{#each COMPARE_ROWS as [name, get]}
-												<span class="border-t border-ag-line py-2.5 text-ag-faint"
+												<span class="border-t border-slate-200 dark:border-slate-700 py-2.5 text-slate-400 dark:text-slate-500"
 													>{name}</span
 												>
 												{#each m.compare as h}
-													<span class="border-t border-ag-line py-2.5">{get(h)}</span>
+													<span class="border-t border-slate-200 dark:border-slate-700 py-2.5">{get(h)}</span>
 												{/each}
 											{/each}
 										</div>
@@ -1172,14 +1101,14 @@
 
 								<!-- an action the person confirms inline -->
 								{#if m.proposal}
-									<div class="rounded-3xl bg-ag-surface p-5">
+									<div class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
 										{#if m.proposal.kind === 'save'}
 											<ul class="space-y-3">
 												{#each m.proposal.jobs as j}
 													<li class="flex items-center gap-3 text-sm">
 														<Avatar company={j.company} size="sm" />
 														<span class="min-w-0 flex-1 truncate"
-															>{j.title}<span class="text-ag-faint">&nbsp;· {j.company.name}</span></span
+															>{j.title}<span class="text-slate-400 dark:text-slate-500">&nbsp;· {j.company.name}</span></span
 														>
 													</li>
 												{/each}
@@ -1187,7 +1116,7 @@
 										{:else if m.proposal.kind === 'apply'}
 											<ul class="-mx-2 space-y-1">
 												{#each m.proposal.apps as app, i}
-													<li class="rounded-2xl {m.proposal.open === i ? 'bg-ag-bg' : ''}">
+													<li class="rounded-2xl {m.proposal.open === i ? 'bg-slate-50 dark:bg-slate-800' : ''}">
 														<button
 															type="button"
 															class="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left text-sm"
@@ -1200,11 +1129,11 @@
 															<Avatar company={app.job.company} size="sm" />
 															<span class="min-w-0 flex-1">
 																<span class="block truncate font-medium">{app.job.title}</span>
-																<span class="block truncate text-xs text-ag-faint"
+																<span class="block truncate text-xs text-slate-400 dark:text-slate-500"
 																	>{app.job.company.name} · {app.ats} · {app.fields.length + 1} answers</span
 																>
 															</span>
-															<svg viewBox="0 0 20 20" class="h-3 w-3 shrink-0 text-ag-faint transition {m.proposal.open === i ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
+															<svg viewBox="0 0 20 20" class="h-3 w-3 shrink-0 text-slate-400 dark:text-slate-500 transition {m.proposal.open === i ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"
 																><path d="M5 8l5 5 5-5" /></svg
 															>
 														</button>
@@ -1212,13 +1141,13 @@
 															<div class="px-3 pb-3 text-sm" transition:slide={{ duration: 150 }}>
 																<dl class="grid grid-cols-[9rem_1fr_auto] gap-x-3">
 																	{#each app.fields as f}
-																		<dt class="border-t border-ag-line py-1.5 text-ag-faint">{f.label}</dt>
-																		<dd class="min-w-0 truncate border-t border-ag-line py-1.5">{f.value}</dd>
-																		<dd class="border-t border-ag-line py-1.5 text-right text-xs text-ag-faint">{SOURCE_LABEL[f.source]}</dd>
+																		<dt class="border-t border-slate-200 dark:border-slate-700 py-1.5 text-slate-400 dark:text-slate-500">{f.label}</dt>
+																		<dd class="min-w-0 truncate border-t border-slate-200 dark:border-slate-700 py-1.5">{f.value}</dd>
+																		<dd class="border-t border-slate-200 dark:border-slate-700 py-1.5 text-right text-xs text-slate-400 dark:text-slate-500">{SOURCE_LABEL[f.source]}</dd>
 																	{/each}
 																</dl>
-																<p class="mt-3 text-ag-faint">Why do you want to work here? · drafted</p>
-																<p class="mt-1 rounded-2xl bg-ag-surface p-3 leading-6">{app.note}</p>
+																<p class="mt-3 text-slate-400 dark:text-slate-500">Why do you want to work here? · drafted</p>
+																<p class="mt-1 rounded-2xl bg-slate-100 dark:bg-slate-700 p-3 leading-6">{app.note}</p>
 															</div>
 														{/if}
 													</li>
@@ -1228,14 +1157,14 @@
 											<p class="text-sm">Your CV and every answer will be removed from this browser. You can upload again any time.</p>
 										{:else}
 											<p class="text-sm">
-												<span class="text-ag-faint">Daily at 06:00 ·</span>
+												<span class="text-slate-400 dark:text-slate-500">Daily at 06:00 ·</span>
 												{m.proposal.summary}
 											</p>
 										{/if}
 										<div class="mt-5 flex items-center gap-2">
 											{#if m.proposal.status === 'pending'}
 												<button
-													class="flex-1 rounded-full bg-ag-accent py-2.5 text-sm font-medium text-ag-on-accent transition hover:opacity-80"
+													class="flex-1 rounded-lg bg-send-green py-2 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:ring-2"
 													on:click={() => decide(m, true)}
 													>{m.proposal.kind === 'save'
 														? 'Save'
@@ -1246,11 +1175,11 @@
 														: 'Watch'}</button
 												>
 												<button
-													class="flex-1 rounded-full py-2.5 text-sm font-medium text-ag-muted transition hover:bg-ag-raised"
+													class="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
 													on:click={() => decide(m, false)}>Not now</button
 												>
 											{:else}
-												<p class="text-sm text-ag-muted">
+												<p class="text-sm text-slate-500 dark:text-slate-400">
 													{m.proposal.status === 'done'
 														? { save: '✓ Saved', watch: '✓ Watching', apply: '✓ Sent for submission', forget: '✓ Deleted' }[m.proposal.kind]
 														: 'Cancelled'}
@@ -1268,20 +1197,20 @@
 	</section>
 
 	<!-- composer, with the brief attached as context -->
-	<div class="shrink-0 bg-ag-bg pb-5 pt-2">
-		<div class="mx-auto max-w-2xl px-5">
+	<div class="shrink-0 border-t border-slate-200 bg-slate-50/95 pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 {tabBar ? 'pb-24 sm:pb-5' : 'pb-5'}">
+		<div class="mx-auto max-w-3xl px-4 sm:px-6">
 			{#if lastAgent && lastAgent.suggestions.length && !busy}
 				<div class="mb-3 flex gap-2 overflow-x-auto pb-1" in:fade={{ duration: 150 }}>
 					{#each lastAgent.suggestions as s}
 						<button
-							class="shrink-0 rounded-full border border-ag-line px-3.5 py-1.5 text-sm text-ag-muted transition hover:border-ag-text hover:text-ag-text"
+							class="shrink-0 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-send-green hover:text-send-green dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
 							on:click={() => send(s)}>{s}</button
 						>
 					{/each}
 				</div>
 			{/if}
 			<form
-				class="rounded-[28px] border border-ag-line bg-ag-input p-2 shadow-[0_2px_24px_-8px_rgba(0,0,0,0.12)] transition focus-within:border-ag-faint"
+				class="rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-send-green focus-within:ring-1 focus-within:ring-send-green dark:border-slate-600 dark:bg-slate-900"
 				on:submit|preventDefault={() => send(input)}
 			>
 				{#if chips.length}
@@ -1290,11 +1219,11 @@
 							<li transition:fade={{ duration: 120 }}>
 								<button
 									type="button"
-									class="flex items-center gap-1 rounded-full bg-ag-chip py-0.5 pl-2.5 pr-2 text-xs text-ag-muted transition hover:bg-ag-raised hover:text-ag-text"
+									class="flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-2 text-xs font-semibold transition hover:opacity-75 {chipClass(c)}"
 									on:click={() => removeChip(c)}
 									disabled={busy}
 									aria-label="Remove {c.label}"
-									>{c.label}<span class="text-ag-faint">×</span></button
+									>{c.label}<span class="text-slate-400 dark:text-slate-500">×</span></button
 								>
 							</li>
 						{/each}
@@ -1310,7 +1239,7 @@
 					/>
 					<button
 						type="button"
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-ag-faint transition hover:bg-ag-surface hover:text-ag-text"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
 						on:click={() => fileInput.click()}
 						disabled={busy || !ready}
 						aria-label={$profile ? 'Replace your CV' : 'Attach your CV'}
@@ -1320,18 +1249,29 @@
 							><path d="M21 11.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.3-8.3" /></svg
 						>
 					</button>
+					<button
+						type="button"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+						on:click={() => (briefOpen = true)}
+						aria-label="Your CV, saved roles and watches"
+						title="Your CV, saved roles and watches"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+							><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg
+						>
+					</button>
 					<textarea
 						bind:this={composer}
 						bind:value={input}
 						on:keydown={onKey}
 						rows="1"
 						placeholder={!ready ? 'Loading…' : interview ? 'Type your answer…' : 'Ask for a role, or refine…'}
-						class="max-h-40 min-h-[2.5rem] flex-1 resize-none border-0 bg-transparent px-2 py-2 placeholder:text-ag-faint focus:ring-0"
+						class="max-h-40 min-h-[2.5rem] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-base text-slate-900 placeholder:text-slate-400 focus:ring-0 dark:text-white sm:text-sm"
 					/>
 					<button
 						type="submit"
 						disabled={busy || !ready || !input.trim()}
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-ag-accent text-ag-on-accent transition hover:opacity-80 disabled:bg-ag-chip disabled:text-ag-faint"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-send-green text-white transition hover:opacity-90 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
 						aria-label="Send"
 					>
 						<svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
@@ -1347,33 +1287,33 @@
 	{#if briefOpen}
 		<div class="fixed inset-0 z-30 bg-black/20 dark:bg-black/60" transition:fade={{ duration: 150 }} on:click={() => (briefOpen = false)} />
 		<aside
-			class="fixed inset-y-0 right-0 z-40 w-full max-w-sm overflow-y-auto bg-ag-bg p-6 shadow-2xl"
+			class="fixed inset-y-0 right-0 z-40 w-full max-w-sm overflow-y-auto border-l border-slate-200 bg-slate-50 p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
 			transition:fly={{ x: 40, duration: 200 }}
 		>
 			<div class="flex items-center justify-between">
-				<h2 class="text-lg font-semibold">You</h2>
-				<button class="text-ag-faint hover:text-ag-text" aria-label="Close" on:click={() => (briefOpen = false)}>✕</button>
+				<h2 class="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">You</h2>
+				<button class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Close" on:click={() => (briefOpen = false)}>✕</button>
 			</div>
 			{#if $profile}
-				<div class="mt-4 rounded-2xl bg-ag-surface p-4 text-sm">
+				<div class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
 					<p class="font-medium">{$profile.name || 'Your profile'}</p>
-					<p class="text-ag-muted">{[$profile.email, $profile.cvName].filter(Boolean).join(' · ')}</p>
-					<p class="mt-1 text-xs text-ag-faint">
+					<p class="text-slate-500 dark:text-slate-400">{[$profile.email, $profile.cvName].filter(Boolean).join(' · ')}</p>
+					<p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
 						{QUESTIONS.filter((q) => q.known($profile)).length} of {QUESTIONS.length} form questions answered
 					</p>
 					<div class="mt-3 flex gap-3 text-xs">
-						<button class="text-ag-muted hover:text-ag-text" on:click={() => { briefOpen = false; send('Show my profile'); }}>View</button>
-						<button class="text-ag-muted hover:text-ag-text" on:click={() => fileInput.click()}>Replace CV</button>
-						<button class="text-ag-muted hover:text-ag-text" on:click={() => { briefOpen = false; send('Forget my CV'); }}>Delete</button>
+						<button class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" on:click={() => { briefOpen = false; send('Show my profile'); }}>View</button>
+						<button class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" on:click={() => fileInput.click()}>Replace CV</button>
+						<button class="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" on:click={() => { briefOpen = false; send('Forget my CV'); }}>Delete</button>
 					</div>
 				</div>
 			{:else}
-				<button class="mt-4 w-full rounded-2xl border border-dashed border-ag-line p-4 text-left text-sm text-ag-muted hover:border-ag-faint" on:click={() => fileInput.click()}>
+				<button class="mt-4 w-full rounded-xl border border-dashed border-slate-300 p-4 text-left text-sm text-slate-500 hover:border-send-green hover:text-send-green dark:border-slate-600 dark:text-slate-400" on:click={() => fileInput.click()}>
 					Upload your CV to let the agent apply for you.
 				</button>
 			{/if}
 
-			<h2 class="mt-10 text-lg font-semibold">Saved and applied</h2>
+			<h2 class="mt-10 text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Saved and applied</h2>
 			{#if saved.length}
 				<ul class="mt-4 -mx-2">
 					{#each saved as j (j.id)}
@@ -1381,55 +1321,55 @@
 							<Avatar company={j.company} size="sm" />
 							<span class="min-w-0 flex-1">
 								<span class="block truncate text-sm font-medium">{j.title}</span>
-								<span class="block truncate text-xs text-ag-muted"
+								<span class="block truncate text-xs text-slate-500 dark:text-slate-400"
 									>{j.company.name}{$tracked[j.id]?.status === 'applied' ? ' · Applied' : ''}</span
 								>
 							</span>
-							<button class="text-ag-faint hover:text-ag-text" aria-label="Remove {j.title}" on:click={() => setStatus(j.id, null)}>✕</button>
+							<button class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Remove {j.title}" on:click={() => setStatus(j.id, null)}>✕</button>
 						</li>
 					{/each}
 				</ul>
 			{:else}
-				<p class="mt-4 text-sm text-ag-muted">Nothing yet. Ask the agent to save roles.</p>
+				<p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Nothing yet. Ask the agent to save roles.</p>
 			{/if}
 
-			<h2 class="mt-10 text-lg font-semibold">Watching</h2>
+			<h2 class="mt-10 text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">Watching</h2>
 			{#if watches.length}
 				<ul class="mt-4 space-y-3">
 					{#each watches as w, i}
 						<li class="flex items-start gap-3 text-sm">
-							<span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-							<span class="flex-1">{w.summary}<span class="block text-xs text-ag-faint">Daily at 06:00</span></span>
-							<button class="text-ag-faint hover:text-ag-text" aria-label="Stop watching" on:click={() => (watches = watches.filter((_, k) => k !== i))}>✕</button>
+							<span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-send-green" />
+							<span class="flex-1">{w.summary}<span class="block text-xs text-slate-400 dark:text-slate-500">Daily at 06:00</span></span>
+							<button class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Stop watching" on:click={() => (watches = watches.filter((_, k) => k !== i))}>✕</button>
 						</li>
 					{/each}
 				</ul>
 			{:else}
-				<p class="mt-4 text-sm text-ag-muted">Ask the agent to watch a search.</p>
+				<p class="mt-4 text-sm text-slate-500 dark:text-slate-400">Ask the agent to watch a search.</p>
 			{/if}
 
-			<button class="mt-10 text-xs text-ag-faint hover:text-ag-text" on:click={() => (showJson = !showJson)}
+			<button class="mt-10 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white" on:click={() => (showJson = !showJson)}
 				>{showJson ? 'Hide' : 'Show'} brief as JSON · {toolCalls} tool calls</button
 			>
 			{#if showJson}
-				<pre transition:slide={{ duration: 150 }} class="mt-2 overflow-x-auto rounded-2xl bg-ag-surface p-4 text-[11px] leading-relaxed text-ag-text">{briefJson}</pre>
+				<pre transition:slide={{ duration: 150 }} class="mt-2 overflow-x-auto rounded-2xl bg-slate-100 dark:bg-slate-700 p-4 text-[11px] leading-relaxed text-slate-900 dark:text-white">{briefJson}</pre>
 			{/if}
 		</aside>
 	{/if}
 </div>
 
 <style>
-	.agent {
-		font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-	}
 	/* a soft moving highlight on the status line while the agent works */
 	.shimmer {
-		background: linear-gradient(90deg, var(--ag-faint) 0%, var(--ag-faint) 40%, var(--ag-text) 50%, var(--ag-faint) 60%, var(--ag-faint) 100%);
+		background: linear-gradient(90deg, #94a3b8 0%, #94a3b8 40%, #0f172a 50%, #94a3b8 60%, #94a3b8 100%);
 		background-size: 200% 100%;
 		-webkit-background-clip: text;
 		background-clip: text;
 		color: transparent;
 		animation: shimmer 1.4s linear infinite;
+	}
+	:global(.dark) .shimmer {
+		background-image: linear-gradient(90deg, #64748b 0%, #64748b 40%, #f8fafc 50%, #64748b 60%, #64748b 100%);
 	}
 	@keyframes shimmer {
 		from {

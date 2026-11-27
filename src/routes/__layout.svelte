@@ -15,7 +15,7 @@
 	onMount(startAccount);
 
 	$: path = $page.url.pathname;
-	// the agent demo is a full-screen app with its own chrome and its own way of asking questions
+	// the agent fills the screen below the header and asks its own questions, so no onboarding gate
 	$: bare = path === '/agent' || path.startsWith('/agent/');
 	$: gated = !UNGATED.some((p) => path === p || path.startsWith(`${p}/`));
 	$: onboarded = isOnboarded($preferences);
@@ -28,7 +28,13 @@
 </svelte:head>
 
 {#if bare}
-	<slot />
+	<!-- the agent: the board's header, then a full-height conversation -->
+	<div class="flex h-screen flex-col bg-slate-50 dark:bg-slate-800">
+		<div class="mx-auto w-full max-w-5xl shrink-0 px-4 sm:px-6">
+			<Header />
+		</div>
+		<slot />
+	</div>
 {:else}
 <div class="flex flex-1 flex-col bg-slate-50 dark:bg-slate-800">
 	<main class="mx-auto w-full max-w-5xl px-4 pb-28 sm:px-6 sm:pb-16">

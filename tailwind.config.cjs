@@ -5,20 +5,6 @@ const config = {
 	theme: {
 		extend: {
 			colors: {
-				// the agent demo's palette; values come from the chosen theme (src/lib/themes.ts)
-				ag: {
-					bg: 'var(--ag-bg)',
-					surface: 'var(--ag-surface)',
-					raised: 'var(--ag-raised)',
-					input: 'var(--ag-input)',
-					chip: 'var(--ag-chip)',
-					line: 'var(--ag-line)',
-					text: 'var(--ag-text)',
-					muted: 'var(--ag-muted)',
-					faint: 'var(--ag-faint)',
-					accent: 'var(--ag-accent)',
-					'on-accent': 'var(--ag-on-accent)'
-				},
 				"dark-tokyo-purple-01": "#7B25F2",
 				"dark-tokyo-purple-02": "#B217E8",
 				"dark-tokyo-purple-03": "#660FAC",

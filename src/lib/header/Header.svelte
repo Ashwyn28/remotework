@@ -31,6 +31,7 @@
 	onMount(handleDarkMode);
 
 	$: current = $page.url.pathname.replace(/\/$/, '');
+	$: onAgent = current === '/agent' || current.startsWith('/agent/');
 	$: savedCount = Object.keys($tracked).length;
 	// nothing to browse until the visitor has answered the questions
 	$: onboarded = isOnboarded($preferences);
@@ -38,6 +39,12 @@
 	$: showTabBar = onboarded && current !== '/match';
 	$: accountHref = $account.status === 'signed-in' ? '/account' : '/login';
 	$: accountLabel = $account.status === 'signed-in' ? 'Account' : 'Sign in';
+	// Board | Agent: two ways into the same roles
+	const view = (active: boolean) =>
+		'flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1 text-sm font-semibold transition hover:no-underline ' +
+		(active
+			? 'bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white'
+			: 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white');
 	const tab = (active: boolean) =>
 		'flex flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-semibold hover:no-underline ' +
 		(active ? 'text-send-green' : 'text-slate-500 dark:text-slate-400');
@@ -53,15 +60,23 @@
 			: 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700');
 </script>
 
-<header class="border-b border-slate-200 pb-2 dark:border-slate-700 sm:pb-3">
+<header class="border-b border-slate-200 dark:border-slate-700 {onAgent ? '' : 'pb-2 sm:pb-3'}">
 	<div class="flex items-center gap-3 py-3">
 		<a
 			href="/"
 			class="whitespace-nowrap text-xl font-extrabold tracking-tight text-slate-900 hover:no-underline dark:text-white"
 			>orbbits <span class="text-send-green">job</span></a
 		>
+		<nav class="flex rounded-full bg-slate-200/70 p-0.5 dark:bg-slate-700" aria-label="View">
+			<a href="/" class={view(!onAgent)} aria-current={!onAgent ? 'page' : undefined}>Board</a>
+			<a href="/agent" class={view(onAgent)} aria-current={onAgent ? 'page' : undefined}>
+				<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true"
+					><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z" /></svg
+				>Agent</a
+			>
+		</nav>
 		<div class="ml-auto flex items-center gap-1 sm:gap-2">
-			{#if onboarded}
+			{#if onboarded && !onAgent}
 				<!-- on phones these live in the bottom tab bar -->
 				<a
 					href="/"
@@ -119,7 +134,7 @@
 			</button>
 		</div>
 	</div>
-	{#if onboarded}
+	{#if onboarded && !onAgent}
 		<nav
 			class="no-scrollbar fade-right -mx-4 flex items-center gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
 			aria-label="Industries"
