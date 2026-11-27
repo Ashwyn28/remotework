@@ -1210,7 +1210,7 @@
 										{:else if m.proposal.kind === 'apply'}
 											<ul class="-mx-2 space-y-1">
 												{#each m.proposal.apps as app, i}
-													<li class="rounded-2xl {m.proposal.open === i ? 'bg-slate-50 dark:bg-slate-800' : ''}">
+													<li class="rounded-2xl {m.proposal.open === i ? 'bg-canvas dark:bg-canvas-dark' : ''}">
 														<button
 															type="button"
 															class="flex w-full items-center gap-3 rounded-2xl px-2 py-2 text-left text-sm"
@@ -1293,7 +1293,7 @@
 	</section>
 
 	<!-- composer, with the brief attached as context -->
-	<div class="shrink-0 border-t border-slate-200 bg-slate-50/95 pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 {tabBar ? 'pb-24 sm:pb-5' : 'pb-5'}">
+	<div class="shrink-0 border-t border-slate-200 bg-canvas/95 pt-3 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 {tabBar ? 'pb-24 sm:pb-5' : 'pb-5'}">
 		<div class="mx-auto max-w-3xl px-4 sm:px-6">
 			{#if lastAgent && lastAgent.suggestions.length && !busy}
 				<div class="mb-3 flex gap-2 overflow-x-auto pb-1" in:fade={{ duration: 150 }}>
@@ -1383,7 +1383,7 @@
 	{#if briefOpen}
 		<div class="fixed inset-0 z-30 bg-black/20 dark:bg-black/60" transition:fade={{ duration: 150 }} on:click={() => (briefOpen = false)} />
 		<aside
-			class="fixed inset-y-0 right-0 z-40 w-full max-w-sm overflow-y-auto border-l border-slate-200 bg-slate-50 p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-800"
+			class="fixed inset-y-0 right-0 z-40 w-full max-w-sm overflow-y-auto border-l border-slate-200 bg-canvas p-6 shadow-2xl dark:border-slate-700 dark:bg-canvas-dark"
 			transition:fly={{ x: 40, duration: 200 }}
 		>
 			<div class="flex items-center justify-between">

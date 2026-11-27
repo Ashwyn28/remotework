@@ -5,6 +5,8 @@ const config = {
 	theme: {
 		extend: {
 			colors: {
+				// page background: a pastel blue that the white cards and green buttons sit on
+				canvas: { DEFAULT: '#edf3fb', dark: '#17223a' },
 				"dark-tokyo-purple-01": "#7B25F2",
 				"dark-tokyo-purple-02": "#B217E8",
 				"dark-tokyo-purple-03": "#660FAC",

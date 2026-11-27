@@ -170,13 +170,13 @@ button:focus:not(:focus-visible) {
 	}
 	.btn3d-secondary {
 		--btn-face: #ffffff;
-		--btn-base: #cbd5e1;
-		--btn-edge: #475569;
+		--btn-base: #c3d5ec;
+		--btn-edge: #3f5373;
 		--btn-ink: #0f172a;
 	}
 	.dark .btn3d-secondary {
-		--btn-face: #1e293b;
-		--btn-base: #020617;
+		--btn-face: #22304d;
+		--btn-base: #0b1222;
 		--btn-edge: #64748b;
 		--btn-ink: #f1f5f9;
 	}
