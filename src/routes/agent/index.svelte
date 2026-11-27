@@ -62,6 +62,8 @@
 		traceOpen: boolean;
 		/** summary line for the collapsed trace */
 		traceTitle: string;
+		/** while thinking: what the model is doing, e.g. "Searching the board" */
+		activity: string;
 		/** what the agent read from a CV, shown as a card */
 		profileCard: Profile | null;
 	}
@@ -177,6 +179,7 @@
 			suggestions: [],
 			traceOpen: false,
 			traceTitle: '',
+			activity: '',
 			profileCard: null,
 			...partial
 		};
@@ -616,7 +619,9 @@
 					return false;
 				}
 				if (!res.ok) throw new Error(`agent ${res.status}`);
-				data = await res.json();
+				data = (res.headers.get('content-type') ?? '').includes('ndjson')
+					? await readStream(res, msg, texts)
+					: await res.json();
 				modelState = 'on';
 			} catch {
 				if (round === 0) {
@@ -650,7 +655,7 @@
 				results.push({ type: 'tool_result', tool_use_id: call.id, content: output.text, ...(output.error ? { is_error: true } : {}) });
 			}
 			convo = [...convo, { role: 'user', content: results }];
-			update(msg, { thinking: true });
+			update(msg, { thinking: true, activity: '' });
 		}
 		update(msg, {
 			thinking: false,
@@ -659,6 +664,53 @@
 			suggestions: msg.proposal ? [] : nextMoves(brief, lastHits)
 		});
 		return true;
+	}
+
+	/** what the status line says while the model calls a tool */
+	const TOOL_ACTIVITY: Record<string, string> = {
+		search_jobs: 'Searching the board',
+		get_job: 'Reading the role',
+		compare_jobs: 'Comparing roles',
+		save_jobs: 'Getting your shortlist ready',
+		watch_search: 'Setting up a watch',
+		find_cv_matches: 'Reading your CV against the board',
+		show_jobs: 'Picking the best fits',
+		update_profile: 'Updating your profile',
+		apply_to_jobs: 'Preparing applications'
+	};
+
+	/**
+	 * Read a streamed reply: show its text as it is written and what it is doing, then return the
+	 * complete message from the final event, exactly as the API sent it.
+	 */
+	async function readStream(res: Response, msg: AgentMsg, earlier: string[]) {
+		const reader = (res.body as ReadableStream<Uint8Array>).getReader();
+		const decoder = new TextDecoder();
+		let buffer = '';
+		let live = '';
+		for (;;) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			buffer += decoder.decode(value, { stream: true });
+			let newline: number;
+			while ((newline = buffer.indexOf('\n')) >= 0) {
+				const line = buffer.slice(0, newline).trim();
+				buffer = buffer.slice(newline + 1);
+				if (!line) continue;
+				const event = JSON.parse(line);
+				if (event.type === 'text') {
+					live += event.text;
+					update(msg, { thinking: false, activity: '', text: [...earlier, live.trim()].filter(Boolean).join('\n\n') });
+				} else if (event.type === 'tool') {
+					update(msg, { thinking: true, activity: TOOL_ACTIVITY[event.name] ?? 'Working' });
+				} else if (event.type === 'done') {
+					return { content: event.content, stop_reason: event.stop_reason };
+				} else if (event.type === 'error') {
+					throw new Error(event.error);
+				}
+			}
+		}
+		throw new Error('the reply ended early');
 	}
 
 	const pick = <T extends string>(value: unknown, allowed: readonly T[]): T[] =>
@@ -1088,7 +1140,7 @@
 								<!-- status, then a collapsed trace of what the agent did -->
 								{#if m.thinking || (m.steps.length && m.shownSteps < m.steps.length)}
 									<p class="shimmer text-sm">
-										{m.thinking ? 'Thinking' : stepLabel(m.steps[m.shownSteps]?.tool)}…
+										{m.thinking ? m.activity || 'Thinking' : stepLabel(m.steps[m.shownSteps]?.tool)}…
 									</p>
 								{:else if m.steps.length}
 									<button
