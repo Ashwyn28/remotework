@@ -7,7 +7,8 @@
  */
 import { browser } from '$app/env';
 import { writable } from 'svelte/store';
-import type { Job } from './board';
+import { jobPlaces } from './board';
+import type { Job, Place } from './board';
 
 export interface Profile {
 	cvName: string;
@@ -388,4 +389,122 @@ export function fillApplication(job: Job, p: Profile): Application {
 		{ label: 'How did you hear about us?', value: 'orbbits job board', source: 'drafted' as const }
 	].filter((f) => f.value);
 	return { job, ats: atsFor(job.applyUrl), fields, note: draftNote(job, p) };
+}
+
+// ---------------------------------------------------------------------------
+// Matching roles to a CV
+// ---------------------------------------------------------------------------
+
+/**
+ * The CV as the agent may read it: contact details, links and the name removed. Only sent when
+ * the person asks for roles that fit them.
+ */
+export function cvForModel(p: Profile): string {
+	let text = p.cvText;
+	for (const value of [p.name, p.email, p.phone, p.linkedin, p.github, p.portfolio])
+		if (value) text = text.split(value).join(' ');
+	return text
+		.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]')
+		// phone numbers have 10 or more digits; date ranges like "2017 - 2021" have 8
+		.replace(/\+?\d[\d\s().-]{8,}\d/g, (m) => (m.replace(/\D/g, '').length >= 10 ? '[phone]' : m))
+		.replace(/(?:https?:\/\/)?(?:www\.)?[\w-]+\.(?:com|io|dev|me|co\.uk|org|net|app)\/?\S*/gi, '[link]')
+		.replace(/[ \t]+/g, ' ')
+		.trim()
+		.slice(0, 6000);
+}
+
+const WORK_FROM_TITLE: [RegExp, string][] = [
+	[/\b(engineer|developer|programmer|sre|devops|architect)\b/i, 'engineering'],
+	[/\b(designer|ux|ui)\b/i, 'design'],
+	[/\b(product manager|product owner|head of product|product lead)\b/i, 'product'],
+	[/\b(data|analyst|scientist|machine learning|ml)\b/i, 'data'],
+	[/\b(marketing|growth|content|brand)\b/i, 'marketing'],
+	[/\b(sales|account executive|customer success|business development)\b/i, 'sales'],
+	[/\b(operations|recruiter|people|finance|support)\b/i, 'operations']
+];
+
+/** The kind of work a CV points to, from its headline. */
+export const workTypeFor = (p: Profile): string | null =>
+	WORK_FROM_TITLE.find(([re]) => re.test(p.headline))?.[1] ?? null;
+
+/** Seniority implied by years of experience, with the neighbouring levels that are worth a look. */
+function senioritiesFor(p: Profile): { best: string[]; near: string[] } {
+	const y = p.years;
+	if (y === null) return { best: [], near: [] };
+	if (/\b(head|director|vp|manager)\b/i.test(p.headline)) return { best: ['manager'], near: ['staff'] };
+	if (/\b(staff|principal|lead)\b/i.test(p.headline)) return { best: ['staff'], near: ['senior', 'manager'] };
+	if (y < 2) return { best: ['junior'], near: ['mid'] };
+	if (y < 5) return { best: ['mid'], near: ['junior', 'senior'] };
+	if (y < 9) return { best: ['senior'], near: ['mid', 'staff'] };
+	return { best: ['staff', 'senior'], near: ['manager'] };
+}
+
+/** Where the person can work from, from their location and work set-up answers. */
+export function placesFor(p: Profile): Place[] {
+	const setup = (p.answers.setup ?? '').toLowerCase();
+	if (/remote only/.test(setup)) return ['remote'];
+	const places: Place[] = [];
+	if (/london/i.test(p.location)) places.push('london');
+	else if (p.location && !/remote/i.test(p.location)) places.push('uk');
+	if (!setup || /remote/.test(setup) || /remote/i.test(p.location)) places.push('remote');
+	return places;
+}
+
+const STOP = new Set(['senior', 'junior', 'lead', 'staff', 'principal', 'the', 'and', 'of', 'at', 'for', 'ii', 'iii', 'i', 'a', 'to', 'in', '-', '&']);
+const words = (text: string) =>
+	text
+		.toLowerCase()
+		.split(/[^a-z0-9+#.]+/)
+		.filter((w) => w.length > 1 && !STOP.has(w));
+
+export interface Candidate {
+	job: Job;
+	score: number;
+	signals: string[];
+}
+
+/**
+ * Score every open role against the CV and keep the best. Cheap and generous: the model makes
+ * the real judgement from this shortlist.
+ */
+export function cvCandidates(
+	p: Profile,
+	jobs: Job[],
+	opts: { industries?: string[]; workTypes?: string[]; places?: Place[]; exclude?: Set<string>; limit?: number } = {}
+): Candidate[] {
+	const workTypes = opts.workTypes?.length ? opts.workTypes : [workTypeFor(p)].filter((w): w is string => Boolean(w));
+	const places = opts.places?.length ? opts.places : placesFor(p);
+	const { best, near } = senioritiesFor(p);
+	const titleWords = new Set(words(p.headline));
+	const skillRes = p.skills.map((s) => [s, new RegExp(`(^|[^\\w+#])${s.replace(/[.+#]/g, '\\$&')}(?![\\w+#])`, 'i')] as const);
+
+	const scored: Candidate[] = [];
+	for (const job of jobs) {
+		if (!job.company.top || opts.exclude?.has(job.id)) continue;
+		if (opts.industries?.length && !opts.industries.includes(job.industry)) continue;
+		if (places.length && !places.some((pl) => jobPlaces(job).has(pl))) continue;
+		if (workTypes.length && !workTypes.includes(job.workType)) continue;
+
+		const signals: string[] = [];
+		let score = 0;
+		const text = `${job.title} ${job.description}`;
+		const skills = skillRes.filter(([, re]) => re.test(text)).map(([s]) => s);
+		if (skills.length) {
+			score += Math.min(skills.length, 6) * 3;
+			signals.push(`mentions ${skills.slice(0, 4).join(', ')}`);
+		}
+		const shared = [...new Set(words(job.title))].filter((w) => titleWords.has(w));
+		if (shared.length) {
+			score += shared.length * 4;
+			signals.push(`title shares “${shared.join(' ')}”`);
+		}
+		if (job.seniority && best.includes(job.seniority)) {
+			score += 4;
+			signals.push('right level');
+		} else if (job.seniority && near.includes(job.seniority)) score += 1;
+		else if (job.seniority && best.length) score -= 4;
+		if (job.postedDays !== null && job.postedDays <= 14) score += 1;
+		scored.push({ job, score, signals });
+	}
+	return scored.sort((a, b) => b.score - a.score || a.job.company.rank - b.job.company.rank).slice(0, opts.limit ?? 40);
 }
