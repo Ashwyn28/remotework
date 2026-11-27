@@ -8,7 +8,7 @@
 
 <div
 	class="rounded border-2 border-beach-black dark:border-black px-4 py-2 dark:text-white"
-	transition:fade
+	transition:fade|local
 >
 	{#if company.profile_url}
 		<img src={company.profile_url} alt="profile url" />
