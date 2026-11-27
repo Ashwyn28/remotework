@@ -21,11 +21,11 @@
 
 <div
 	class="rounded px-4 py-2 bg-light-sand-green dark:bg-dark-beach-black"
-	transition:fade
+	transition:fade|local
 	on:click={handleSelection}
 >
 	{#if showFullListing}
-		<div class="h-full dark:text-white" transition:slide>
+		<div class="h-full dark:text-white" transition:slide|local>
 			<div>
 				<img src={listing.profile_url} alt="profile url" />
 			</div>
