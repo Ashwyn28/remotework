@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import { CATEGORIES } from '$lib/board';
-	import { isOnboarded } from '$lib/board';
-	import { preferences, tracked } from '$lib/personal';
+	import { tracked } from '$lib/personal';
 	import { account } from '$lib/account';
 	import { onMount } from 'svelte';
 
@@ -33,10 +32,8 @@
 	$: current = $page.url.pathname.replace(/\/$/, '');
 	$: onAgent = current === '/agent' || current.startsWith('/agent/');
 	$: savedCount = Object.keys($tracked).length;
-	// nothing to browse until the visitor has answered the questions
-	$: onboarded = isOnboarded($preferences);
 	// the questions page has its own bottom bar (Back / Continue), so the tab bar steps aside
-	$: showTabBar = onboarded && current !== '/match';
+	$: showTabBar = current !== '/match';
 	$: accountHref = $account.status === 'signed-in' ? '/account' : '/login';
 	$: accountLabel = $account.status === 'signed-in' ? 'Account' : 'Sign in';
 	// Board | Agent: two ways into the same roles
@@ -76,7 +73,7 @@
 			>
 		</nav>
 		<div class="ml-auto flex items-center gap-1 sm:gap-2">
-			{#if onboarded && !onAgent}
+			{#if !onAgent}
 				<!-- on phones these live in the bottom tab bar -->
 				<a
 					href="/"
@@ -134,7 +131,7 @@
 			</button>
 		</div>
 	</div>
-	{#if onboarded && !onAgent}
+	{#if !onAgent}
 		<nav
 			class="no-scrollbar fade-right -mx-4 flex items-center gap-1 overflow-x-auto px-4 sm:mx-0 sm:px-0"
 			aria-label="Industries"

@@ -76,6 +76,15 @@ carryForward();
 
 export const preferences = persisted<Preferences>('board.preferences.v3', EMPTY_PREFERENCES);
 
+// The board lists engineering roles only. Answers saved earlier may name design, product, sales
+// and so on, which would now hide every role, so keep only the kinds it still lists.
+const LISTED_WORK = ['engineering', 'data'];
+preferences.update((p) =>
+	p.workTypes?.some((w) => !LISTED_WORK.includes(w))
+		? { ...p, workTypes: p.workTypes.filter((w) => LISTED_WORK.includes(w)) }
+		: p
+);
+
 export const setStatus = (jobId: string, status: Status | null): void =>
 	tracked.update((all) => {
 		const next = { ...all };

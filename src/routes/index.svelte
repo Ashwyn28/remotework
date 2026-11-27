@@ -11,6 +11,7 @@
 		categorySummaries,
 		CATEGORIES,
 		inPlaces,
+		isOnboarded,
 		linkOnlyCompanies,
 		MATCH_THRESHOLD,
 		matchScore,
@@ -44,6 +45,9 @@
 	let query = '';
 	let filters: Filters = NO_FILTERS;
 	let sort: Sort = 'match';
+	// nothing to match on yet: show the newest roles first, until the visitor picks a sort
+	let sortChosen = false;
+	$: if (!sortChosen) sort = isOnboarded($preferences) ? 'match' : 'newest';
 	let hideApplied = true;
 	let shown = PAGE;
 	/** one of the visitor's industries, or '' for all of them */
@@ -82,11 +86,17 @@
 				: b.score - a.score || (a.job.postedDays ?? 999) - (b.job.postedDays ?? 999)
 		);
 
-	// keep the visitor's own industries, in the order they appear on the board
+	// visitors who have not answered the questions see every role, newest first
+	$: personalised = isOnboarded($preferences);
+	// the visitor's own industries, or every industry with roles; in board order
 	$: myIndustries = CATEGORIES.filter(
-		(c) => c.kind === 'industry' && $preferences.industries.includes(c.slug)
+		(c) =>
+			c.kind === 'industry' &&
+			(personalised
+				? $preferences.industries.includes(c.slug)
+				: candidates.some(({ job }) => job.industry === c.slug))
 	);
-	$: if (tab && !$preferences.industries.includes(tab)) tab = '';
+	$: if (tab && !myIndustries.some((c) => c.slug === tab)) tab = '';
 	$: tabCounts = Object.fromEntries(
 		myIndustries.map((c) => [
 			c.slug,
@@ -95,7 +105,11 @@
 	);
 	$: matching = tab ? candidates.filter(({ job }) => job.industry === tab) : candidates;
 	$: fresh = matching.filter(({ job }) => job.addedInLatestBatch);
-	$: feed = fresh.length ? [...fresh, ...matching.filter(({ job }) => !job.addedInLatestBatch)] : matching;
+	// best match: roles new to the board since the last sync lead; newest: posting date alone
+	$: feed =
+		sort === 'match' && fresh.length
+			? [...fresh, ...matching.filter(({ job }) => !job.addedInLatestBatch)]
+			: matching;
 	// chosen industries' companies that list roles only on their own sites (Google, Meta…)
 	$: elsewhere = myIndustries
 		.filter((c) => !tab || tab === c.slug)
@@ -117,9 +131,11 @@
 	};
 
 	// industries the visitor did not pick, counted for where they can work
-	$: others = categorySummaries(inPlaces(jobs, $preferences.places), 'industry').filter(
-		(summary) => !$preferences.industries.includes(summary.category.slug)
-	);
+	$: others = personalised
+		? categorySummaries(inPlaces(jobs, $preferences.places), 'industry').filter(
+				(summary) => !$preferences.industries.includes(summary.category.slug)
+		  )
+		: [];
 
 	// start from the top again whenever the list changes shape
 	$: query, filters, sort, hideApplied, tab, (shown = PAGE);
@@ -137,7 +153,7 @@
 </script>
 
 <svelte:head>
-	<title>Your industries · orbbits job</title>
+	<title>{personalised ? 'Your roles' : 'Latest engineering roles in the UK'} · orbbits job</title>
 	<meta
 		name="description"
 		content="Open roles at top companies, matched to what you are looking for."
@@ -146,22 +162,32 @@
 
 <section class="pb-4 pt-6 sm:py-12">
 	<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-		Your industries
+		{personalised ? 'Your roles' : 'Latest engineering roles in the UK'}
 	</h1>
 	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
-		<span class="sm:hidden"
-			>{feed.length}
-			{feed.length === 1 ? 'role' : 'roles'} at {companyCount}
-			{companyCount === 1 ? 'company' : 'companies'}{#if newThisWeek}, {newThisWeek} new this week{/if}</span
-		>
-		<span class="hidden sm:inline">
-			{feed.length} open {feed.length === 1 ? 'role' : 'roles'} at {companyCount} top {companyCount === 1
-				? 'company'
-				: 'companies'}
-			across your {myIndustries.length === 1 ? 'industry' : `${myIndustries.length} industries`} fit
-			what you told us{#if newThisWeek}, {newThisWeek} posted this week{/if}.
-		</span>
+		{feed.length.toLocaleString()} open {feed.length === 1 ? 'role' : 'roles'} at {companyCount}
+		{companyCount === 1 ? 'company' : 'companies'}{#if newThisWeek}, {newThisWeek} posted this week{/if}.
+		{#if personalised}
+			<span class="hidden sm:inline">Matched to what you told us.</span>
+		{:else}
+			<span class="hidden sm:inline">Newest first, refreshed every morning.</span>
+		{/if}
 	</p>
+	{#if !personalised}
+		<div class="mt-4 flex flex-wrap items-center gap-2">
+			<a
+				href="/match"
+				class="rounded-lg bg-send-green px-4 py-2 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:no-underline hover:ring-2"
+				>Personalise your feed</a
+			>
+			<a
+				href="/agent"
+				class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-send-green hover:text-send-green hover:no-underline dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+				>Ask the agent</a
+			>
+			<span class="text-xs text-slate-400">A few quick questions, or tell the agent in your own words.</span>
+		</div>
+	{:else}
 	<!-- phones: one line, tap to change -->
 	<a
 		href="/match"
@@ -182,6 +208,7 @@
 			>Change answers</a
 		>
 	</div>
+	{/if}
 </section>
 
 <div class="mb-4 space-y-3 sm:mb-5">
@@ -221,6 +248,7 @@
 			Sort
 			<select
 				bind:value={sort}
+				on:change={() => (sortChosen = true)}
 				class="rounded-lg border-slate-300 bg-white py-1.5 pl-3 pr-8 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
 			>
 				<option value="match">Best match</option>
@@ -251,7 +279,7 @@
 					class="rounded-lg py-2.5 text-sm font-semibold {sort === value
 						? 'bg-dark-beach-black text-white dark:bg-white dark:text-slate-900'
 						: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}"
-					on:click={() => (sort = value)}>{label}</button
+					on:click={() => ((sort = value), (sortChosen = true))}>{label}</button
 				>
 			{/each}
 		</div>
@@ -330,7 +358,7 @@
 				{:else if fresh.length && i === fresh.length}
 					<h2 class="mb-3 mt-5 text-lg font-semibold text-slate-900 dark:text-slate-100">Earlier roles</h2>
 				{/if}
-				<JobCard {job} {score} />
+				<JobCard {job} score={personalised ? score : null} />
 			</li>
 		{/each}
 	</ol>

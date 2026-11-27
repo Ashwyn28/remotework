@@ -461,9 +461,9 @@ export function suggestions(brief: Brief, hits: Hit[]): string[] {
 
 export const EXAMPLES = [
 	'Senior backend roles at AI companies in London',
-	'Remote product jobs at fintech startups, over £90k',
+	'Remote platform engineering at fintechs, over £90k',
 	'Rust or Go engineering at deep tech companies',
-	'What’s new this week in climate?'
+	'New machine learning roles this week'
 ];
 
 export { CATEGORIES, STAGES };

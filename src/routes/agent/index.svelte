@@ -2,9 +2,9 @@
 	import { browser } from '$app/env';
 	import { onMount, tick } from 'svelte';
 	import { fade, fly, slide } from 'svelte/transition';
-	import { ago, getCategory, isOnboarded, loadBoard, seniorityLabel, stageLabel } from '$lib/board';
+	import { ago, getCategory, loadBoard, seniorityLabel, stageLabel } from '$lib/board';
 	import type { Company, Job } from '$lib/board';
-	import { preferences, setStatus, tracked } from '$lib/personal';
+	import { setStatus, tracked } from '$lib/personal';
 	import {
 		acknowledge,
 		applyChanges,
@@ -98,8 +98,8 @@
 	let pendingApply: ApplyRequest | null = null;
 	let fileInput: HTMLInputElement;
 
-	// phones show the board's tab bar along the bottom once the questions are answered
-	$: tabBar = isOnboarded($preferences);
+	// phones show the board's tab bar along the bottom
+	const tabBar = true;
 
 	let thread: HTMLElement;
 	let composer: HTMLTextAreaElement;
@@ -1038,7 +1038,7 @@
 						What are you looking for?
 					</h1>
 					<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
-						{#if ready && !offline}{jobs.length.toLocaleString()} open roles at {companies.length} top
+						{#if ready && !offline}{jobs.length.toLocaleString()} open engineering roles at {companies.length}
 							UK tech companies, updated every morning.{:else if offline}The board is offline right
 							now.{:else}Loading the board…{/if}
 					</p>
