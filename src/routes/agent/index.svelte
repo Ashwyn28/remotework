@@ -22,6 +22,8 @@
 	import type { Brief, Change, Hit, Step } from '$lib/agent';
 	import {
 		answer,
+		cvCandidates,
+		cvForModel,
 		EMPTY_PROFILE,
 		extract,
 		fillApplication,
@@ -244,6 +246,7 @@
 				brief = EMPTY_BRIEF;
 				lastHits = [];
 				convo = [];
+				cvSent = false;
 				update(msg, {
 					thinking: false,
 					text: 'Brief cleared. Tell me what kind of role you want, in your own words.',
@@ -251,6 +254,19 @@
 				});
 			} else if (modelState !== 'off' && (await askModel(msg, said))) {
 				// the model handled it
+			} else if ($profile && /\b(fit|fits|suit|suits|match|matches)\b.*\b(cv|me|resume|profile|experience)\b/i.test(said)) {
+				// no model: the shortlist's own ranking, with the signals it found
+				const picks = cvCandidates($profile, jobs).slice(0, PAGE);
+				lastHits = picks.map((c) => ({ job: c.job, score: -1, reasons: c.signals }));
+				shownCount = lastHits.length;
+				update(msg, {
+					thinking: false,
+					text: picks.length
+						? `Roles closest to your CV, by skills, title and level. The assistant is offline, so this is a rough ranking.`
+						: 'Nothing on the board lines up with your CV and answers right now.',
+					hits: lastHits,
+					suggestions: nextMoves(brief, lastHits)
+				});
 			} else if (command.kind === 'apply') {
 				await startApply(msg, { count: command.count, companies: command.companies });
 			} else if (command.kind === 'help') {
@@ -429,7 +445,7 @@
 		update(msg, {
 			thinking: false,
 			text: 'That’s everything most forms ask. I can now apply for you: find a role, then say “apply to the top 2” or “apply to Stripe”. I’ll show each filled form before anything goes.',
-			suggestions: lastHits.length ? ['Apply to the top match', 'Show my profile'] : EXAMPLES.slice(0, 2)
+			suggestions: ['Find roles that fit my CV', 'Show my profile']
 		});
 	}
 
@@ -525,6 +541,8 @@
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let convo: any[] = [];
 	const MAX_TOOL_ROUNDS = 6;
+	/** the CV text is sent at most once per conversation, the first time matching is asked for */
+	let cvSent = false;
 	const MAX_CONVO = 50;
 
 	function contextNote(): string {
@@ -568,7 +586,10 @@
 	 * anything happened, so the caller can fall back to the rule-based agent.
 	 */
 	async function askModel(msg: AgentMsg, said: string): Promise<boolean> {
-		if (convo.length > MAX_CONVO) convo = []; // start afresh; the context note carries the search
+		if (convo.length > MAX_CONVO) {
+			convo = []; // start afresh; the context note carries the search
+			cvSent = false;
+		}
 		const startLength = convo.length;
 		convo = [...convo, { role: 'user', content: [{ type: 'text', text: said }, { type: 'text', text: contextNote() }] }];
 		const texts: string[] = [];
@@ -606,6 +627,7 @@
 				}
 				// mid-turn: the conversation now ends with unanswered tool calls, so start afresh
 				convo = [];
+				cvSent = false;
 				update(msg, { thinking: false, text: [...texts, 'I lost the connection partway through. Try that again?'].join('\n\n') });
 				return true;
 			}
@@ -758,6 +780,70 @@
 			return { text: `A card asking the person to confirm a daily watch for "${summary}" is shown.` };
 		}
 
+		if (name === 'find_cv_matches') {
+			const p = $profile;
+			if (!p) {
+				done('no CV');
+				return { text: 'The person has not uploaded a CV. Ask them to attach one with the paperclip.', error: true };
+			}
+			const candidates = cvCandidates(p, jobs, {
+				industries: pick(input.industries, INDUSTRY_SLUGS),
+				workTypes: pick(input.work_types, WORK_SLUGS),
+				places: pick(input.places, ['london', 'uk', 'remote'] as const),
+				exclude: new Set(Object.keys($tracked).filter((id) => $tracked[id].status === 'applied'))
+			});
+			const firstTime = !cvSent;
+			cvSent = true;
+			done(`${candidates.length} candidates${firstTime ? ', CV read' : ''}`);
+			return {
+				text: JSON.stringify({
+					cv: {
+						headline: p.headline || null,
+						years_experience: p.years,
+						skills_found: p.skills,
+						location: p.location || null,
+						work_setup: p.answers.setup || null,
+						salary_expectation: p.answers.salary || null,
+						needs_sponsorship: p.answers.sponsorship || null,
+						text: firstTime ? cvForModel(p) : '(sent earlier in this conversation)'
+					},
+					candidates: candidates.map((c) => ({
+						id: c.job.id,
+						title: c.job.title,
+						company: c.job.company.name,
+						industry: c.job.industry,
+						work_type: c.job.workType,
+						seniority: c.job.seniority || null,
+						location: c.job.region || null,
+						set_up: c.job.arrangement || c.job.mode || null,
+						salary: c.job.salary || null,
+						posted_days_ago: c.job.postedDays,
+						signals: c.signals,
+						summary: c.job.description.replace(/\s+/g, ' ').slice(0, 320)
+					}))
+				})
+			};
+		}
+
+		if (name === 'show_jobs') {
+			const FIT: Record<string, string> = { strong: 'Strong fit', good: 'Good fit', stretch: 'Stretch' };
+			const picks = (Array.isArray(input.jobs) ? input.jobs : []) as { job_id?: string; fit?: string; why?: string }[];
+			const shown: Hit[] = [];
+			for (const pick of picks.slice(0, 8)) {
+				const job = jobs.find((j) => j.id === String(pick.job_id));
+				if (!job || shown.some((h) => h.job.id === job.id)) continue;
+				const why = String(pick.why ?? '').trim().slice(0, 240);
+				shown.push({ job, score: -1, reasons: [`${FIT[String(pick.fit)] ?? 'Fit'}: ${why}`] });
+			}
+			lastHits = shown;
+			shownCount = shown.length;
+			update(msg, { hits: shown, compare: [] });
+			done(`${shown.length} shown`);
+			return shown.length
+				? { text: `Shown ${shown.length} role(s) to the person in your order.` }
+				: { text: 'None of those ids were found.', error: true };
+		}
+
 		if (name === 'update_profile') {
 			const field = PROFILE_FIELDS[String(input.field)];
 			let value = String(input.value ?? '').trim().slice(0, 200);
@@ -814,6 +900,7 @@
 	/** Next moves after results: applying comes first once there is something to apply to. */
 	const nextMoves = (b: Brief, hits: Hit[]): string[] =>
 		[
+			...($profile ? ['Find roles that fit my CV'] : []),
 			...(hits.length ? [$profile ? 'Apply to the top match' : 'Upload my CV to auto-apply'] : []),
 			...suggestions(b, hits)
 		].slice(0, 4);
@@ -916,7 +1003,9 @@
 		'profile.extract': 'Picking out your details',
 		'form.fetch': 'Opening the application forms',
 		'form.fill': 'Filling in your answers',
-		'application.submit': 'Submitting'
+		'application.submit': 'Submitting',
+		find_cv_matches: 'Reading your CV against the board',
+		show_jobs: 'Picking the best fits'
 	};
 	const SOURCE_LABEL = { cv: 'from CV', you: 'your answer', drafted: 'drafted' };
 	$: applied = saved.filter((j) => $tracked[j.id]?.status === 'applied');
@@ -973,10 +1062,10 @@
 							<button
 								class="group flex h-full w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4 text-left font-semibold text-slate-800 transition hover:border-send-green disabled:opacity-40 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
 								disabled={!ready}
-								on:click={() => fileInput.click()}
+								on:click={() => ($profile ? send('Find roles that fit my CV') : fileInput.click())}
 							>
 								<span
-									>{$profile ? `Apply with ${$profile.cvName}` : 'Upload your CV to auto-apply'}</span
+									>{$profile ? 'Find roles that fit my CV' : 'Upload your CV to find roles that fit you'}</span
 								>
 								<span class="text-send-green" aria-hidden="true">+</span>
 							</button>
@@ -1058,6 +1147,11 @@
 												<dd class="border-t border-slate-200 dark:border-slate-700 py-2">{m.profileCard.answers[q.key]}</dd>
 											{/each}
 										</dl>
+										<p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+											Your CV stays in this browser. When you ask for roles that fit you, its text,
+											without your name, contact details or links, is sent to Claude to compare against
+											the board. It isn’t stored.
+										</p>
 									</div>
 								{/if}
 
