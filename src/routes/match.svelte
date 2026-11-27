@@ -1,16 +1,14 @@
 <script lang="ts">
 	import { browser } from '$app/env';
 	import { goto } from '$app/navigation';
-	import { isOnboarded } from '$lib/board';
-	import { preferences } from '$lib/personal';
 	import Onboarding from '../components/onboarding.svelte';
 
-	// people changing answers can back out; first-timers must answer before seeing roles
-	const cancellable = isOnboarded($preferences);
+	// answering is optional: anyone can back out to the roles
+	const cancellable = true;
 </script>
 
 <svelte:head>
-	<title>Change your answers · orbbits job</title>
+	<title>Personalise your feed · orbbits job</title>
 </svelte:head>
 
 {#if browser}

@@ -11,8 +11,11 @@
 
 	const dispatch = createEventDispatcher<{ done: Preferences; cancel: void }>();
 
-	const toOptions = (kind: 'work' | 'industry') =>
-		CATEGORIES.filter((c) => c.kind === kind).map((c) => ({ value: c.slug, label: c.name }));
+	// the board lists engineering roles only: software and infrastructure, or data and ML
+	const ENGINEERING_KINDS = [
+		{ value: 'engineering', label: 'Software, infrastructure and hardware' },
+		{ value: 'data', label: 'Data, ML and research' }
+	];
 	const SALARIES = [0, 50, 70, 90, 110, 130];
 	// every curated company is either a late-stage private company or a public one
 	const COMPANY_KINDS = [
@@ -35,8 +38,8 @@
 		},
 		{
 			key: 'workTypes',
-			title: 'What do you do?',
-			hint: 'Narrow the feed to your kind of role, or skip to see every role at these companies.',
+			title: 'What kind of engineering?',
+			hint: 'Every role here is in engineering. Narrow to one side, or skip to see both.',
 			required: false
 		},
 		{
@@ -120,7 +123,7 @@
 	</div>
 
 	{#if step === 0 && !cancellable}
-		<p class="mt-8 text-sm font-semibold text-send-green">Before we show you any roles</p>
+		<p class="mt-8 text-sm font-semibold text-send-green">Personalise your feed</p>
 	{/if}
 	<h1
 		id="question"
@@ -135,7 +138,7 @@
 
 	<div class="mt-6">
 		{#if current.key === 'workTypes'}
-			<ChipGroup options={toOptions('work')} bind:selected={workTypes} label="Types of work" />
+			<ChipGroup options={ENGINEERING_KINDS} bind:selected={workTypes} label="Kinds of engineering" />
 		{:else if current.key === 'places'}
 			<ChipGroup options={PLACES} bind:selected={places} label="Where you can work" />
 		{:else if current.key === 'seniorities'}
