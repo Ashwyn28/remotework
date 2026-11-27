@@ -192,7 +192,7 @@
 	</div>
 
 	<div
-		class="pb-safe sticky bottom-0 z-20 -mx-4 mt-8 flex items-center gap-3 border-t border-slate-200 bg-slate-50/95 px-4 pt-3 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 sm:static sm:mx-0 sm:mt-10 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none sm:dark:bg-transparent"
+		class="pb-safe sticky bottom-0 z-20 -mx-4 mt-8 flex items-center gap-3 border-t border-slate-200 bg-canvas/95 px-4 pt-3 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 sm:static sm:mx-0 sm:mt-10 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none sm:dark:bg-transparent"
 	>
 		{#if !answered}
 			<span class="text-xs text-slate-400 sm:hidden">Pick at least one</span>
@@ -216,10 +216,10 @@
 			disabled={!answered}
 			class="{!current.required && !last
 				? ''
-				: 'ml-auto'} rounded-lg bg-send-green px-6 py-3 text-sm font-semibold text-white sm:px-5 sm:py-2 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-40"
+				: 'ml-auto'} btn3d btn3d-primary"
 			on:click={next}
 		>
-			{last ? 'Show my roles' : 'Continue'}
+			<span>{last ? 'Show my roles' : 'Continue'}</span>
 		</button>
 	</div>
 	{#if !answered}

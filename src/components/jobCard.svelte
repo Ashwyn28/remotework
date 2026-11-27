@@ -107,8 +107,7 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					on:click={() => setStatus(job.id, 'applied')}
-					class="hidden rounded bg-send-green px-4 py-1 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:no-underline hover:ring-2 sm:inline-block"
-					>Apply</a
+					class="btn3d btn3d-primary btn3d-sm hidden sm:inline-block"><span>Apply</span></a
 				>
 			{/if}
 			<SaveButton jobId={job.id} />
@@ -137,8 +136,7 @@
 			target="_blank"
 			rel="noopener noreferrer"
 			on:click={() => setStatus(job.id, 'applied')}
-			class="mt-3 block rounded bg-send-green px-4 py-1.5 text-center text-sm font-semibold text-white hover:no-underline sm:hidden"
-			>Apply</a
+			class="btn3d btn3d-primary btn3d-block mt-4 sm:hidden"><span>Apply</span></a
 		>
 	{/if}
 </article>

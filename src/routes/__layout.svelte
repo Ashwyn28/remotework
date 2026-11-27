@@ -18,7 +18,7 @@
 	(an if/else here kept the outgoing branch on screen when its animations were interrupted).
 	The agent fills the screen below the header; board pages scroll as a normal document.
 -->
-<div class="flex flex-col bg-slate-50 dark:bg-slate-800 {bare ? 'h-screen' : 'min-h-screen'}">
+<div class="flex flex-col bg-canvas dark:bg-canvas-dark {bare ? 'h-screen' : 'min-h-screen'}">
 	<div class="mx-auto w-full max-w-5xl shrink-0 px-4 sm:px-6">
 		<Header />
 	</div>

@@ -175,8 +175,7 @@
 								target="_blank"
 								rel="noopener noreferrer"
 								on:click={() => setStatus(job.id, 'applied')}
-								class="rounded bg-send-green px-4 py-1 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:no-underline hover:ring-2"
-								>Apply</a
+								class="btn3d btn3d-primary btn3d-sm"><span>Apply</span></a
 							>
 						{:else}
 							<span
@@ -201,8 +200,7 @@
 							target="_blank"
 							rel="noopener noreferrer"
 							on:click={() => setStatus(job.id, 'applied')}
-							class="ml-auto rounded-lg bg-send-green px-5 py-2 text-sm font-semibold text-white hover:no-underline"
-							>Apply</a
+							class="btn3d btn3d-primary ml-auto"><span>Apply</span></a
 						>
 					{/if}
 				</div>

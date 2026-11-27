@@ -174,16 +174,14 @@
 		{/if}
 	</p>
 	{#if !personalised}
-		<div class="mt-4 flex flex-wrap items-center gap-2">
+		<div class="mt-5 flex flex-wrap items-center gap-3">
 			<a
 				href="/match"
-				class="rounded-lg bg-send-green px-4 py-2 text-sm font-semibold text-white ring-send-green transition hover:bg-transparent hover:text-send-green hover:no-underline hover:ring-2"
-				>Personalise your feed</a
+				class="btn3d btn3d-primary"><span>Personalise your feed</span></a
 			>
 			<a
 				href="/agent"
-				class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-send-green hover:text-send-green hover:no-underline dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
-				>Ask the agent</a
+				class="btn3d btn3d-secondary"><span>Ask the agent</span></a
 			>
 			<span class="text-xs text-slate-400">A few quick questions, or tell the agent in your own words.</span>
 		</div>
@@ -294,9 +292,9 @@
 		<FilterBar bind:filters stageOptions={presentStages(jobs)} />
 		<button
 			type="button"
-			class="w-full rounded-lg bg-send-green py-2.5 text-sm font-semibold text-white sm:hidden"
+			class="btn3d btn3d-primary btn3d-block sm:hidden"
 			on:click={() => (showFilters = false)}
-			>Show {feed.length} {feed.length === 1 ? 'role' : 'roles'}</button
+			><span>Show {feed.length} {feed.length === 1 ? 'role' : 'roles'}</span></button
 		>
 	</div>
 </div>
@@ -304,7 +302,7 @@
 <span bind:this={feedTop} aria-hidden="true" />
 {#if myIndustries.length > 1}
 	<div
-		class="no-scrollbar sticky top-0 z-20 -mx-4 mb-4 flex gap-1 overflow-x-auto border-b border-slate-200 bg-slate-50/95 px-4 backdrop-blur dark:border-slate-700 dark:bg-slate-800/95 sm:static sm:mx-0 sm:mb-5 sm:gap-2 sm:bg-transparent sm:px-0 sm:backdrop-blur-none sm:dark:bg-transparent"
+		class="no-scrollbar sticky top-0 z-20 -mx-4 mb-4 flex gap-1 overflow-x-auto border-b border-slate-200 bg-canvas/95 px-4 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 sm:static sm:mx-0 sm:mb-5 sm:gap-2 sm:bg-transparent sm:px-0 sm:backdrop-blur-none sm:dark:bg-transparent"
 		role="tablist"
 		aria-label="Your industries"
 	>
