@@ -19,11 +19,9 @@
 		aria-label="Analytics cookies"
 		transition:fly|local={{ y: 12, duration: 180 }}
 	>
-		<p class="text-sm font-bold text-slate-900 dark:text-white">Help us improve orbbits job?</p>
+		<p class="text-sm font-bold text-slate-900 dark:text-white">Cookies for analytics?</p>
 		<p class="mt-1 text-xs leading-5 text-slate-600 dark:text-slate-300">
-			With your OK we use cookies with PostHog (stored in the EU) to see how the site is used,
-			including anonymised recordings of visits. Your CV, chats and contact details are never
-			sent. Without it we only count visits anonymously, with no cookies.
+			Helps us improve the site (PostHog, EU). Your CV and chats are never sent.
 		</p>
 		<div class="mt-3 flex gap-3">
 			<button class="btn3d btn3d-primary btn3d-sm" on:click={() => choose('granted')}><span>Accept</span></button>

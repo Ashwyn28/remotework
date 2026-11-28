@@ -178,30 +178,17 @@
 	/>
 </svelte:head>
 
-<section class="pb-4 pt-6 sm:py-12">
+<section class="pb-4 pt-5 sm:py-10">
 	<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-		{personalised ? 'Your roles' : 'Latest engineering roles in the UK'}
+		{personalised ? 'Your roles' : 'Latest engineering roles'}
 	</h1>
-	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
-		{feed.length.toLocaleString()} open {feed.length === 1 ? 'role' : 'roles'} at {companyCount}
-		{companyCount === 1 ? 'company' : 'companies'}{#if newThisWeek}, {newThisWeek} posted this week{/if}.
-		{#if personalised}
-			<span class="hidden sm:inline">Matched to what you told us.</span>
-		{:else}
-			<span class="hidden sm:inline">Newest first, refreshed every morning.</span>
-		{/if}
+	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+		{feed.length.toLocaleString()} roles · {companyCount} companies{#if newThisWeek} · {newThisWeek} new this week{/if}
 	</p>
 	{#if !personalised}
-		<div class="mt-5 flex flex-wrap items-center gap-3">
-			<a
-				href="/match"
-				class="btn3d btn3d-primary"><span>Personalise your feed</span></a
-			>
-			<a
-				href="/agent"
-				class="btn3d btn3d-secondary"><span>Ask the agent</span></a
-			>
-			<span class="text-xs text-slate-400">A few quick questions, or tell the agent in your own words.</span>
+		<div class="mt-4 flex gap-3">
+			<a href="/match" class="btn3d btn3d-primary"><span>Personalise</span></a>
+			<a href="/agent" class="btn3d btn3d-secondary"><span>Ask the agent</span></a>
 		</div>
 	{:else}
 	<!-- phones: one line, tap to change -->
