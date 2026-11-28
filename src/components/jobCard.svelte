@@ -6,6 +6,7 @@
 	import { setStatus, tracked } from '$lib/personal';
 	import { slide } from 'svelte/transition';
 	import Avatar from './avatar.svelte';
+	import Salary from './salary.svelte';
 	import SaveButton from './saveButton.svelte';
 
 	export let job: Job;
@@ -29,9 +30,7 @@
 	let open = false;
 
 	$: industry = getCategory(job.company.industry, 'industry');
-	$: details = [job.salary, seniorityLabel(job.seniority), job.arrangement, job.region].filter(
-		Boolean
-	);
+	$: details = [seniorityLabel(job.seniority), job.arrangement, job.region].filter(Boolean);
 	$: scoreClass =
 		score !== null && score >= 80
 			? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-200'
@@ -93,13 +92,10 @@
 						>
 					{/if}
 				</span>
-				<span class="mt-1 block text-sm text-slate-500 dark:text-slate-400">
-					{#if job.salary}<span class="font-semibold text-slate-800 dark:text-slate-100"
-							>{job.salary}</span
-						>{/if}{details
-						.slice(job.salary ? 1 : 0)
-						.map((part, i) => (i || job.salary ? ' · ' : '') + part)
-						.join('')}
+				<span
+					class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400"
+				>
+					<Salary {job} /><span>{details.join(' · ')}</span>
 				</span>
 				{#if job.postedDays !== null || job.verifiedDays !== null}
 					<span class="mt-0.5 hidden whitespace-nowrap text-xs text-slate-400 sm:block">

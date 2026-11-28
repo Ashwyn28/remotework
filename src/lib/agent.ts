@@ -404,7 +404,7 @@ function hit(job: Job, brief: Brief): Hit {
 	if (place) reasons.push(label.place(place));
 	if (job.seniority && brief.seniorities.includes(job.seniority)) reasons.push(label.seniority(job.seniority));
 	const top = salaryTop(job.salary);
-	if (brief.minSalary && top !== null && top >= brief.minSalary) reasons.push(`Pays up to £${top}k`);
+	if (brief.minSalary && top !== null && top >= brief.minSalary) reasons.push(job.salaryEstimated ? `Est. up to £${top}k` : `Pays up to £${top}k`);
 	for (const k of brief.keywords) {
 		if (wordRe(k).test(job.title)) {
 			reasons.push(`${k} in title`);

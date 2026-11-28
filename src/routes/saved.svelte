@@ -16,6 +16,7 @@
 	import { account } from '$lib/account';
 	import type { Status } from '$lib/personal';
 	import Avatar from '../components/avatar.svelte';
+	import Salary from '../components/salary.svelte';
 
 	export let jobs: Job[];
 	export let offline: boolean;
@@ -88,9 +89,7 @@
 										>
 										· {getCategory(job.workType, 'work').name}
 									</p>
-									<p class="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
-										{job.salary}
-									</p>
+									{#if job.salary}<p class="mt-1.5"><Salary {job} /></p>{/if}
 									<p class="mt-1 text-xs text-slate-400">
 										{col.status === 'applied' ? 'Applied' : 'Saved'}
 										{ago(Math.floor((Date.now() - at) / DAY))}

@@ -109,7 +109,10 @@ export interface Job {
 	workType: string;
 	seniority: Seniority | '';
 	industry: string;
+	/** posted pay, or an estimate when salaryEstimated */
 	salary: string;
+	/** true when the employer posted no pay and salary is our estimate */
+	salaryEstimated: boolean;
 	region: string;
 	arrangement: string;
 	mode: WorkMode | null;
@@ -373,6 +376,7 @@ function fromApi(l: any, c: any, addedInLatestBatch: boolean): Job {
 		workType: slugify(l.category) || 'other',
 		industry,
 		salary: l.salary ?? '',
+		salaryEstimated: Boolean(l.salary_estimated),
 		region: l.region ?? '',
 		arrangement: l.arrangement ?? '',
 		mode: modeOf(l.arrangement ?? ''),
@@ -478,6 +482,10 @@ export const EMPTY_PREFERENCES: Preferences = {
 	stages: [],
 	minSalary: 0
 };
+
+/** Salary as text, marking estimates: "£85k – £110k (estimated)". */
+export const salaryLabel = (job: Pick<Job, 'salary' | 'salaryEstimated'>): string =>
+	job.salary && job.salaryEstimated ? `${job.salary} (estimated)` : job.salary;
 
 /** Top of a salary range in thousands: "£85k – £105k" → 105. */
 export const salaryTop = (salary: string): number | null => {
