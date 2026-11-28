@@ -6,6 +6,7 @@
 </script>
 
 <script lang="ts">
+	import { browser } from '$app/env';
 	import {
 		applyFilters,
 		categorySummaries,
@@ -24,6 +25,7 @@
 	} from '$lib/board';
 	import type { Company, Filters, Job } from '$lib/board';
 	import { preferences, tracked } from '$lib/personal';
+	import { lengthBucket, track } from '$lib/analytics';
 	import CategoryCard from '../components/categoryCard.svelte';
 	import Avatar from '../components/avatar.svelte';
 	import FilterBar from '../components/filterBar.svelte';
@@ -125,6 +127,7 @@
 	/** switch industry; if the list has scrolled away on a phone, bring its start back into view */
 	const selectTab = (slug: string) => {
 		tab = slug;
+		track('industry_tab', { industry: slug || 'all' });
 		if (feedTop && feedTop.getBoundingClientRect().top < 0) {
 			feedTop.scrollIntoView({ block: 'start' });
 		}
@@ -136,6 +139,21 @@
 				(summary) => !$preferences.industries.includes(summary.category.slug)
 		  )
 		: [];
+
+	// analytics: what people search for is never sent, only roughly how long it was
+	let searchTimer: ReturnType<typeof setTimeout>;
+	$: if (browser && q) {
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => track('board_searched', { length: lengthBucket(q) }), 1200);
+	}
+	let lastFilters = JSON.stringify(NO_FILTERS);
+	$: if (browser && JSON.stringify(filters) !== lastFilters) {
+		const before = JSON.parse(lastFilters);
+		lastFilters = JSON.stringify(filters);
+		for (const key of ['modes', 'stages'] as const)
+			for (const value of (filters[key] as string[]).filter((v) => !before[key].includes(v)))
+				track('board_filtered', { filter: key, value });
+	}
 
 	// start from the top again whenever the list changes shape
 	$: query, filters, sort, hideApplied, tab, (shown = PAGE);

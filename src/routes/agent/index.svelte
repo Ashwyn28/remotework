@@ -38,6 +38,7 @@
 	import type { Application, Profile, Question } from '$lib/profile';
 	import Avatar from '../../components/avatar.svelte';
 	import JobCard from '../../components/jobCard.svelte';
+	import { lengthBucket, track } from '$lib/analytics';
 
 	type Status = 'pending' | 'sending' | 'done' | 'dismissed';
 	type Proposal =
@@ -207,6 +208,7 @@
 		if (!said || busy || !ready) return;
 		input = '';
 		busy = true;
+		track('agent_message', { mode: modelState === 'off' ? 'rules' : 'model', length: lengthBucket(said) });
 		messages = [...messages, { role: 'user', id: nextId++, text: said }];
 		const msg = agentSay({ thinking: true });
 		await wait(200);
@@ -385,6 +387,7 @@
 				{ tool: 'profile.extract', args: { fields: 'contact, links, role, experience, skills' }, result: `${details} details found`, ms: 2 }
 			]);
 			profile.set(next);
+			track('cv_uploaded', { pages, details_found: details });
 			update(msg, {
 				text: `Here’s what I picked up from your CV. If anything’s wrong, tell me, for example “my email is …”.`,
 				profileCard: next,
@@ -435,6 +438,7 @@
 
 	async function finishInterview(msg: AgentMsg) {
 		interview = null;
+		track('cv_questions_done', {});
 		if (pendingApply) {
 			const request = pendingApply;
 			pendingApply = null;
@@ -591,6 +595,7 @@
 			cvSent = false;
 		}
 		const startLength = convo.length;
+		const startedAt = performance.now();
 		convo = [...convo, { role: 'user', content: [{ type: 'text', text: said }, { type: 'text', text: contextNote() }] }];
 		const texts: string[] = [];
 		let tools = 0;
@@ -606,6 +611,7 @@
 					const body = await res.json().catch(() => ({}));
 					convo = convo.slice(0, startLength);
 					modelState = 'off';
+					track('agent_fallback', { reason: body.scope === 'you' ? 'limit_you' : 'limit_site' });
 					update(msg, {
 						thinking: false,
 						text: body.scope === 'you'
@@ -623,6 +629,7 @@
 					// never reached the model: forget this turn and let the rule-based agent answer
 					convo = convo.slice(0, startLength);
 					modelState = 'off';
+					track('agent_fallback', { reason: 'unreachable' });
 					return false;
 				}
 				// mid-turn: the conversation now ends with unanswered tool calls, so start afresh
@@ -652,6 +659,7 @@
 			convo = [...convo, { role: 'user', content: results }];
 			update(msg, { thinking: true });
 		}
+		track('agent_reply', { ms: Math.round(performance.now() - startedAt), tools, streamed: false });
 		update(msg, {
 			thinking: false,
 			traceTitle: tools ? `Used ${tools} tool${tools === 1 ? '' : 's'}` : '',
@@ -704,6 +712,7 @@
 	}
 
 	async function runTool(msg: AgentMsg, name: string, input: Record<string, unknown>): Promise<{ text: string; error?: boolean }> {
+		track('agent_tool', { tool: name });
 		const started = performance.now();
 		const done = (result: string) => addStep(msg, { tool: name, args: input, result, ms: Math.max(1, Math.round(performance.now() - started)) });
 
@@ -837,6 +846,7 @@
 			}
 			lastHits = shown;
 			shownCount = shown.length;
+			track('cv_matches_shown', { count: shown.length });
 			update(msg, { hits: shown, compare: [] });
 			done(`${shown.length} shown`);
 			return shown.length
@@ -966,6 +976,11 @@
 			pendingApply = null;
 		}
 		p.status = approve ? 'done' : 'dismissed';
+		track('agent_proposal', {
+			kind: p.kind,
+			decision: approve ? 'confirmed' : 'dismissed',
+			count: p.kind === 'save' ? p.jobs.length : p.kind === 'apply' ? p.apps.length : 1
+		});
 		messages = messages;
 		if (approve && p.kind === 'apply') submitApplications(p.apps);
 	}
@@ -1078,7 +1093,7 @@
 						{#if m.role === 'user'}
 							<li class="flex justify-end" in:fly={{ y: 6, duration: 160 }}>
 								<p
-									class="max-w-[80%] rounded-2xl rounded-br-md bg-dark-beach-black px-4 py-2.5 leading-6 text-white dark:bg-slate-700"
+									class="ph-mask max-w-[80%] rounded-2xl rounded-br-md bg-dark-beach-black px-4 py-2.5 leading-6 text-white dark:bg-slate-700"
 								>
 									{m.text}
 								</p>
@@ -1126,7 +1141,7 @@
 								{/if}
 
 								{#if m.text}
-									<p class="whitespace-pre-line leading-7" in:fade={{ duration: 150 }}>{m.text}</p>
+									<p class="ph-mask whitespace-pre-line leading-7" in:fade={{ duration: 150 }}>{m.text}</p>
 								{/if}
 
 								{#if m.profileCard}
@@ -1137,7 +1152,7 @@
 											>
 											{m.profileCard.cvName}
 										</p>
-										<dl class="mt-3 grid grid-cols-[7rem_1fr] gap-x-4">
+										<dl class="ph-mask mt-3 grid grid-cols-[7rem_1fr] gap-x-4">
 											{#each profileRows(m.profileCard) as [label, value]}
 												<dt class="border-t border-slate-200 dark:border-slate-700 py-2 text-slate-400 dark:text-slate-500">{label}</dt>
 												<dd class="min-w-0 break-words border-t border-slate-200 dark:border-slate-700 py-2">{value}</dd>
@@ -1159,7 +1174,11 @@
 									<ul class="space-y-3">
 										{#each m.hits as h (h.job.id)}
 											<li in:fly={{ y: 4, duration: 160 }}>
-												<JobCard job={h.job} score={h.score >= 0 ? h.score : null} />
+												<JobCard
+													job={h.job}
+													score={h.score >= 0 ? h.score : null}
+													source={/^(Strong fit|Good fit|Stretch|Fit):/.test(h.reasons[0] ?? '') ? 'cv_match' : 'agent'}
+												/>
 												{#if h.reasons.length}
 													<p class="mt-1 px-1 text-xs text-slate-500 dark:text-slate-400">
 														<span class="font-semibold text-send-green">Why:</span>
@@ -1232,7 +1251,7 @@
 															>
 														</button>
 														{#if m.proposal.open === i}
-															<div class="px-3 pb-3 text-sm" transition:slide={{ duration: 150 }}>
+															<div class="ph-mask px-3 pb-3 text-sm" transition:slide={{ duration: 150 }}>
 																<dl class="grid grid-cols-[9rem_1fr_auto] gap-x-3">
 																	{#each app.fields as f}
 																		<dt class="border-t border-slate-200 dark:border-slate-700 py-1.5 text-slate-400 dark:text-slate-500">{f.label}</dt>
@@ -1391,7 +1410,7 @@
 				<button class="text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white" aria-label="Close" on:click={() => (briefOpen = false)}>✕</button>
 			</div>
 			{#if $profile}
-				<div class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
+				<div class="ph-mask mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-900">
 					<p class="font-medium">{$profile.name || 'Your profile'}</p>
 					<p class="text-slate-500 dark:text-slate-400">{[$profile.email, $profile.cvName].filter(Boolean).join(' · ')}</p>
 					<p class="mt-1 text-xs text-slate-400 dark:text-slate-500">
