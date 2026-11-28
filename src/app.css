@@ -1,11 +1,11 @@
 
 
 @import "@fontsource/inter";
-/* the site font: rounded and friendly, extra-bold for headings */
-@import "@fontsource/nunito/400.css";
-@import "@fontsource/nunito/600.css";
-@import "@fontsource/nunito/700.css";
-@import "@fontsource/nunito/800.css";
+/* the site font: a quirky grotesk, extra-bold for headings */
+@import "@fontsource/bricolage-grotesque/400.css";
+@import "@fontsource/bricolage-grotesque/600.css";
+@import "@fontsource/bricolage-grotesque/700.css";
+@import "@fontsource/bricolage-grotesque/800.css";
 @import "@fontsource/fira-mono";
 /* Write your global styles here, in PostCSS syntax */
 @tailwind base;
@@ -13,7 +13,7 @@
 
 
 :root {
-	font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
+	font-family: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
 		sans-serif;
 	--font-mono: 'JetBrains Mono' !important;
 	--pure-white: #ffffff;
