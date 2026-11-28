@@ -1,28 +1,28 @@
 <script lang="ts">
-	/** A ringed planet with a moon on its orbit, built like the site's buttons: a bright face on a darker
-	 * base, which lifts when the logo is hovered. */
-	export let size = 30;
+	/** A briefcase with a green orbit around it, on a sky-blue key built like the site's buttons:
+	 * a bright face on a darker base, which lifts when the logo is hovered. */
+	export let size = 32;
 </script>
 
 <span class="logo group inline-flex items-center gap-2">
-	<svg
-		viewBox="0 0 32 32"
-		width={size}
-		height={size}
-		class="shrink-0 overflow-visible"
-		aria-hidden="true"
-	>
+	<svg viewBox="0 0 64 64" width={size} height={size} class="shrink-0 overflow-visible" aria-hidden="true">
 		<!-- base -->
-		<rect x="1" y="4" width="30" height="27" rx="7.5" fill="#2f855a" stroke="#1c4532" stroke-width="1.5" />
+		<rect x="3" y="8" width="58" height="53" rx="15" fill="#2563eb" stroke="#0b1f14" stroke-width="2.5" />
 		<!-- face, lifted -->
 		<g class="logo-face">
-			<rect x="1" y="1" width="30" height="27" rx="7.5" fill="#48bb78" stroke="#1c4532" stroke-width="1.5" />
-			<g transform="rotate(-18 16 14.5)">
-				<!-- the ring: drawn whole, then its front half again over the planet -->
-				<ellipse cx="16" cy="14.5" rx="11.2" ry="4.1" fill="none" stroke="#0b1f14" stroke-width="2" />
-				<circle cx="16" cy="14.5" r="6.4" fill="#ffffff" stroke="#0b1f14" stroke-width="1.75" />
-				<path d="M4.8 14.5 A11.2 4.1 0 0 0 27.2 14.5" fill="none" stroke="#0b1f14" stroke-width="2" />
-				<circle cx="27.2" cy="14.5" r="1.9" fill="#ffffff" stroke="#0b1f14" stroke-width="1.5" />
+			<rect x="3" y="3" width="58" height="53" rx="15" fill="#60a5fa" stroke="#0b1f14" stroke-width="2.5" />
+			<g transform="rotate(-16 32 31)">
+				<ellipse cx="32" cy="31" rx="25" ry="8" fill="none" stroke="#0b1f14" stroke-width="6.5" />
+				<ellipse cx="32" cy="31" rx="25" ry="8" fill="none" stroke="#48bb78" stroke-width="3" />
+			</g>
+			<path d="M26 20 v-3.5 a3 3 0 0 1 3 -3 h6 a3 3 0 0 1 3 3 V20" fill="none" stroke="#0b1f14" stroke-width="3" />
+			<rect x="17" y="20" width="30" height="22" rx="5" fill="#ffffff" stroke="#0b1f14" stroke-width="3" />
+			<path d="M17 29 h30" stroke="#0b1f14" stroke-width="2.5" />
+			<rect x="29" y="26.5" width="6" height="5" rx="1.5" fill="#fbbf24" stroke="#0b1f14" stroke-width="2" />
+			<!-- the orbit's front half, over the briefcase -->
+			<g transform="rotate(-16 32 31)">
+				<path d="M7 31 A25 8 0 0 0 57 31" fill="none" stroke="#0b1f14" stroke-width="6.5" />
+				<path d="M7 31 A25 8 0 0 0 57 31" fill="none" stroke="#48bb78" stroke-width="3" />
 			</g>
 		</g>
 	</svg>
@@ -37,9 +37,9 @@
 		transition: transform 0.1s ease;
 	}
 	.logo:hover .logo-face {
-		transform: translateY(-2px);
+		transform: translateY(-2.5px);
 	}
 	:global(a:active) .logo-face {
-		transform: translateY(1px);
+		transform: translateY(2px);
 	}
 </style>
