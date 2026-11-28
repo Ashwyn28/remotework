@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { roleFacts, track } from '$lib/analytics';
 	import {
 		ago,
 		getCategory,
@@ -174,7 +175,7 @@
 								href={job.applyUrl}
 								target="_blank"
 								rel="noopener noreferrer"
-								on:click={() => setStatus(job.id, 'applied')}
+								on:click={() => { setStatus(job.id, 'applied'); track('apply_clicked', { ...roleFacts(job), source: 'company' }); }}
 								class="btn3d btn3d-primary btn3d-sm"><span>Apply</span></a
 							>
 						{:else}
@@ -199,7 +200,7 @@
 							href={job.applyUrl}
 							target="_blank"
 							rel="noopener noreferrer"
-							on:click={() => setStatus(job.id, 'applied')}
+							on:click={() => { setStatus(job.id, 'applied'); track('apply_clicked', { ...roleFacts(job), source: 'company' }); }}
 							class="btn3d btn3d-primary ml-auto"><span>Apply</span></a
 						>
 					{/if}

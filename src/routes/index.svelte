@@ -6,6 +6,7 @@
 </script>
 
 <script lang="ts">
+	import { browser } from '$app/env';
 	import {
 		applyFilters,
 		categorySummaries,
@@ -24,6 +25,7 @@
 	} from '$lib/board';
 	import type { Company, Filters, Job } from '$lib/board';
 	import { preferences, tracked } from '$lib/personal';
+	import { lengthBucket, track } from '$lib/analytics';
 	import CategoryCard from '../components/categoryCard.svelte';
 	import Avatar from '../components/avatar.svelte';
 	import FilterBar from '../components/filterBar.svelte';
@@ -125,6 +127,7 @@
 	/** switch industry; if the list has scrolled away on a phone, bring its start back into view */
 	const selectTab = (slug: string) => {
 		tab = slug;
+		track('industry_tab', { industry: slug || 'all' });
 		if (feedTop && feedTop.getBoundingClientRect().top < 0) {
 			feedTop.scrollIntoView({ block: 'start' });
 		}
@@ -136,6 +139,21 @@
 				(summary) => !$preferences.industries.includes(summary.category.slug)
 		  )
 		: [];
+
+	// analytics: what people search for is never sent, only roughly how long it was
+	let searchTimer: ReturnType<typeof setTimeout>;
+	$: if (browser && q) {
+		clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => track('board_searched', { length: lengthBucket(q) }), 1200);
+	}
+	let lastFilters = JSON.stringify(NO_FILTERS);
+	$: if (browser && JSON.stringify(filters) !== lastFilters) {
+		const before = JSON.parse(lastFilters);
+		lastFilters = JSON.stringify(filters);
+		for (const key of ['modes', 'stages'] as const)
+			for (const value of (filters[key] as string[]).filter((v) => !before[key].includes(v)))
+				track('board_filtered', { filter: key, value });
+	}
 
 	// start from the top again whenever the list changes shape
 	$: query, filters, sort, hideApplied, tab, (shown = PAGE);
@@ -160,30 +178,17 @@
 	/>
 </svelte:head>
 
-<section class="pb-4 pt-6 sm:py-12">
+<section class="pb-4 pt-5 sm:py-10">
 	<h1 class="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-		{personalised ? 'Your roles' : 'Latest engineering roles in the UK'}
+		{personalised ? 'Your roles' : 'Latest engineering roles'}
 	</h1>
-	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
-		{feed.length.toLocaleString()} open {feed.length === 1 ? 'role' : 'roles'} at {companyCount}
-		{companyCount === 1 ? 'company' : 'companies'}{#if newThisWeek}, {newThisWeek} posted this week{/if}.
-		{#if personalised}
-			<span class="hidden sm:inline">Matched to what you told us.</span>
-		{:else}
-			<span class="hidden sm:inline">Newest first, refreshed every morning.</span>
-		{/if}
+	<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:text-base">
+		{feed.length.toLocaleString()} roles · {companyCount} companies{#if newThisWeek} · {newThisWeek} new this week{/if}
 	</p>
 	{#if !personalised}
-		<div class="mt-5 flex flex-wrap items-center gap-3">
-			<a
-				href="/match"
-				class="btn3d btn3d-primary"><span>Personalise your feed</span></a
-			>
-			<a
-				href="/agent"
-				class="btn3d btn3d-secondary"><span>Ask the agent</span></a
-			>
-			<span class="text-xs text-slate-400">A few quick questions, or tell the agent in your own words.</span>
+		<div class="mt-4 flex gap-3">
+			<a href="/match" class="btn3d btn3d-primary"><span>Personalise</span></a>
+			<a href="/agent" class="btn3d btn3d-secondary"><span>Ask the agent</span></a>
 		</div>
 	{:else}
 	<!-- phones: one line, tap to change -->

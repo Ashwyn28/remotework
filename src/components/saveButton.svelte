@@ -1,7 +1,18 @@
 <script lang="ts">
 	import { setStatus, tracked } from '$lib/personal';
+	import { track } from '$lib/analytics';
+	import type { Source } from '$lib/analytics';
+	import type { Job } from '$lib/board';
 
 	export let jobId: string;
+	/** when given, saving is counted in analytics (company and industry only) */
+	export let job: Job | null = null;
+	export let source: Source = 'board';
+
+	function toggle() {
+		setStatus(jobId, state ? null : 'saved');
+		if (!state && job) track('role_saved', { company: job.company.name, industry: job.industry, source });
+	}
 
 	$: state = $tracked[jobId]?.status ?? null;
 </script>
@@ -14,7 +25,7 @@
 	aria-pressed={state !== null}
 	aria-label={state ? 'Remove from saved' : 'Save role'}
 	title={state === 'applied' ? 'Applied — click to stop tracking' : state ? 'Saved' : 'Save role'}
-	on:click={() => setStatus(jobId, state ? null : 'saved')}
+	on:click={toggle}
 >
 	<svg
 		viewBox="0 0 24 24"

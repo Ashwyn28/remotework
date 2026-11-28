@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { roleFacts, track } from '$lib/analytics';
+	import type { Source } from '$lib/analytics';
 	import { ago, getCategory, MATCH_THRESHOLD, NEW_DAYS, seniorityLabel } from '$lib/board';
 	import type { Job } from '$lib/board';
 	import { setStatus, tracked } from '$lib/personal';
@@ -9,6 +11,20 @@
 	export let job: Job;
 	/** 0–100, or null to hide the badge */
 	export let score: number | null = null;
+	/** where this card is shown, for analytics */
+	export let source: Source = 'board';
+
+	function applied() {
+		setStatus(job.id, 'applied');
+		track('apply_clicked', { ...roleFacts(job), source });
+	}
+	function toggle() {
+		open = !open;
+		if (open) {
+			const { company, industry, seniority } = roleFacts(job);
+			track('role_opened', { company, industry, seniority, source });
+		}
+	}
 
 	let open = false;
 
@@ -25,7 +41,7 @@
 <article
 	class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 sm:p-5"
 >
-	<div class="flex items-start gap-4">
+	<div class="flex items-start gap-3 sm:gap-4">
 		<a
 			href="/company/{job.company.id}"
 			class="shrink-0 hover:no-underline"
@@ -50,7 +66,7 @@
 				type="button"
 				class="mt-1 block w-full text-left"
 				aria-expanded={open}
-				on:click={() => (open = !open)}
+				on:click={toggle}
 			>
 				<span
 					class="block text-base font-bold text-slate-900 dark:text-white sm:text-lg"
@@ -86,31 +102,41 @@
 						.join('')}
 				</span>
 				{#if job.postedDays !== null || job.verifiedDays !== null}
-					<span class="mt-0.5 block text-xs text-slate-400">
+					<span class="mt-0.5 hidden whitespace-nowrap text-xs text-slate-400 sm:block">
 						{#if job.postedDays !== null}<span>Posted {ago(job.postedDays)}</span>{/if}
 						{#if job.postedDays !== null && job.verifiedDays !== null}<span aria-hidden="true">
 								·
 							</span>{/if}
 						{#if job.verifiedDays !== null}<span class="text-emerald-600 dark:text-emerald-400"
-								>✓ <span class="sm:hidden">Still open</span><span class="hidden sm:inline"
-									>Listed on their careers site {ago(job.verifiedDays)}</span
-								></span
+								>✓ Still open</span
 							>{/if}
 					</span>
 				{/if}
 			</button>
 		</div>
-		<div class="flex shrink-0 items-center gap-2">
+		<div class="hidden shrink-0 items-center gap-2 sm:flex">
 			{#if job.applyUrl}
 				<a
 					href={job.applyUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					on:click={() => setStatus(job.id, 'applied')}
-					class="btn3d btn3d-primary btn3d-sm hidden sm:inline-block"><span>Apply</span></a
+					on:click={applied}
+					class="btn3d btn3d-primary btn3d-sm"><span>Apply</span></a
 				>
 			{/if}
-			<SaveButton jobId={job.id} />
+			<SaveButton jobId={job.id} {job} {source} />
+		</div>
+	</div>
+	<!-- phones: freshness and actions share one line, so the title keeps the full width -->
+	<div class="mt-3 flex items-center justify-between gap-2 sm:hidden">
+		<span class="whitespace-nowrap text-xs text-slate-400">
+			{#if job.postedDays !== null}Posted {ago(job.postedDays)}{/if}{#if job.postedDays !== null && job.verifiedDays !== null} · {/if}{#if job.verifiedDays !== null}<span class="text-emerald-600 dark:text-emerald-400">✓ Still open</span>{/if}
+		</span>
+		<div class="flex items-center gap-1">
+			<SaveButton jobId={job.id} {job} {source} />
+			{#if job.applyUrl}
+				<a href={job.applyUrl} target="_blank" rel="noopener noreferrer" on:click={applied} class="btn3d btn3d-primary btn3d-sm"><span>Apply</span></a>
+			{/if}
 		</div>
 	</div>
 	{#if open}
@@ -123,20 +149,12 @@
 					href={job.applyUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					on:click={() => setStatus(job.id, 'applied')}
+					on:click={applied}
 					class="mt-3 inline-block text-sm font-semibold text-send-green hover:underline"
 					>Read the full role and apply ↗</a
 				>
 			{/if}
 		</div>
 	{/if}
-	{#if job.applyUrl}
-		<a
-			href={job.applyUrl}
-			target="_blank"
-			rel="noopener noreferrer"
-			on:click={() => setStatus(job.id, 'applied')}
-			class="btn3d btn3d-primary btn3d-block mt-4 sm:hidden"><span>Apply</span></a
-		>
-	{/if}
+
 </article>

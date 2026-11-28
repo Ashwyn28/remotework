@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { track } from '$lib/analytics';
 	import { CATEGORIES, PLACES, SENIORITIES } from '$lib/board';
 	import type { Place, Preferences, Seniority, Stage } from '$lib/board';
 	import { preferences } from '$lib/personal';
@@ -10,6 +11,7 @@
 	export let cancellable = false;
 
 	const dispatch = createEventDispatcher<{ done: Preferences; cancel: void }>();
+	onMount(() => track('personalise_started', {}));
 
 	// the board lists engineering roles only: software and infrastructure, or data and ML
 	const ENGINEERING_KINDS = [
@@ -27,37 +29,37 @@
 		{
 			key: 'industries',
 			title: 'Which industries do you want to work in?',
-			hint: 'Pick one or more. Your feed only shows companies in these industries.',
+			hint: 'Pick one or more.',
 			required: true
 		},
 		{
 			key: 'places',
 			title: 'Where can you work?',
-			hint: 'Pick every option that works for you. Roles you could not do from there are hidden.',
+			hint: 'Pick all that work for you.',
 			required: true
 		},
 		{
 			key: 'workTypes',
 			title: 'What kind of engineering?',
-			hint: 'Every role here is in engineering. Narrow to one side, or skip to see both.',
+			hint: 'Optional.',
 			required: false
 		},
 		{
 			key: 'seniorities',
 			title: 'What level are you looking for?',
-			hint: 'Roles at these levels rank higher. Leave empty to see every level.',
+			hint: 'Optional. These rank higher.',
 			required: false
 		},
 		{
 			key: 'stages',
 			title: 'What kind of company suits you?',
-			hint: 'Leave empty if you do not mind.',
+			hint: 'Optional.',
 			required: false
 		},
 		{
 			key: 'minSalary',
 			title: 'What is your salary floor?',
-			hint: 'In £ thousands a year. Most companies do not publish pay, so roles without a figure are still shown.',
+			hint: 'Optional. Roles without published pay still show.',
 			required: false
 		}
 	] as const;
@@ -91,6 +93,11 @@
 			minSalary
 		};
 		preferences.set(answers);
+		track('personalise_completed', {
+			industries: industries.length,
+			places: places.length,
+			kinds_of_engineering: workTypes.length
+		});
 		dispatch('done', answers);
 	};
 
@@ -229,11 +236,10 @@
 	{/if}
 	<p class="mt-10 text-xs text-slate-400">
 		{#if $account.status === 'signed-in'}
-			Your answers are saved to your account.
+			Saved to your account.
 		{:else}
-			Your answers stay in this browser.
-			<a href="/login" class="font-semibold text-send-green hover:underline">Sign in</a> to keep
-			them on every device{#if step === 0 && !cancellable}, or to pick up where you left off{/if}.
+			Saved in this browser.
+			<a href="/login" class="font-semibold text-send-green hover:underline">Sign in</a> to sync devices.
 		{/if}
 	</p>
 </section>
