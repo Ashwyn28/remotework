@@ -14,6 +14,7 @@
 	import { preferences, setStatus, tracked } from '$lib/personal';
 	import { slide } from 'svelte/transition';
 	import Avatar from './avatar.svelte';
+	import Salary from './salary.svelte';
 	import SaveButton from './saveButton.svelte';
 
 	export let group: CompanyGroup;
@@ -39,7 +40,7 @@
 	$: shown = compact ? ordered.slice(0, 1) : expanded ? ordered : ordered.slice(0, limit);
 	$: hidden = compact ? 0 : ordered.length - shown.length;
 	const details = (job: CompanyGroup['jobs'][number]) =>
-		[job.salary, seniorityLabel(job.seniority), job.arrangement, job.region].filter(Boolean);
+		[seniorityLabel(job.seniority), job.arrangement, job.region].filter(Boolean);
 	$: industry = getCategory(company.industry, 'industry');
 	$: meta = [stageLabel(company.stage), company.location, company.size].filter(Boolean).join(' · ');
 	const scoreClass = (score: number) =>
@@ -139,13 +140,10 @@
 								>
 							{/if}
 						</span>
-						<span class="mt-0.5 block text-sm text-slate-500 dark:text-slate-400">
-							{#if job.salary}<span class="font-semibold text-slate-800 dark:text-slate-100"
-									>{job.salary}</span
-								>{/if}{details(job)
-								.slice(job.salary ? 1 : 0)
-								.map((part, i) => (i || job.salary ? ' · ' : '') + part)
-								.join('')}
+						<span
+							class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500 dark:text-slate-400"
+						>
+							<Salary {job} /><span>{details(job).join(' · ')}</span>
 						</span>
 						{#if job.postedDays !== null || job.verifiedDays !== null}
 							<span class="mt-0.5 block text-xs text-slate-400">

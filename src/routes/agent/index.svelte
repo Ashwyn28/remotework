@@ -2,7 +2,7 @@
 	import { browser } from '$app/env';
 	import { onMount, tick } from 'svelte';
 	import { fade, fly, slide } from 'svelte/transition';
-	import { ago, getCategory, loadBoard, seniorityLabel, stageLabel } from '$lib/board';
+	import { ago, getCategory, loadBoard, salaryLabel, seniorityLabel, stageLabel } from '$lib/board';
 	import type { Company, Job } from '$lib/board';
 	import { setStatus, tracked } from '$lib/personal';
 	import {
@@ -752,7 +752,7 @@
 		seniority: h.job.seniority || null,
 		location: h.job.region || null,
 		set_up: h.job.arrangement || h.job.mode || null,
-		salary: h.job.salary || null,
+		salary: salaryLabel(h.job) || null,
 		posted_days_ago: h.job.postedDays,
 		match: h.score
 	});
@@ -880,7 +880,7 @@
 						seniority: c.job.seniority || null,
 						location: c.job.region || null,
 						set_up: c.job.arrangement || c.job.mode || null,
-						salary: c.job.salary || null,
+						salary: salaryLabel(c.job) || null,
 						posted_days_ago: c.job.postedDays,
 						signals: c.signals,
 						summary: c.job.description.replace(/\s+/g, ' ').slice(0, 320)
@@ -1057,7 +1057,7 @@
 		['Match', (h) => `${h.score}%`],
 		['Role', (h) => h.job.title],
 		['Seniority', (h) => seniorityLabel(h.job.seniority) || '—'],
-		['Pay', (h) => h.job.salary || 'Not published'],
+		['Pay', (h) => salaryLabel(h.job) || 'Not published'],
 		['Where', (h) => h.job.region || '—'],
 		['Set-up', (h) => h.job.arrangement || '—'],
 		['Stage', (h) => stageLabel(h.job.company.stage) || '—'],
