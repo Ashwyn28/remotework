@@ -3,9 +3,14 @@
 	import Header from '$lib/header/Header.svelte';
 	import { onMount } from 'svelte';
 	import { startAccount } from '$lib/account';
+	import { start as startAnalytics } from '$lib/analytics';
+	import ConsentBanner from '../components/consentBanner.svelte';
 	import '../app.css';
 
-	onMount(startAccount);
+	onMount(() => {
+		startAccount();
+		startAnalytics();
+	});
 
 	// everyone lands on the roles; the questions at /match are an optional way to personalise.
 	// The agent fills the screen below the header.
@@ -30,3 +35,5 @@
 		<slot />
 	</main>
 </div>
+
+<ConsentBanner />

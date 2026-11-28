@@ -5,6 +5,7 @@
 	import { account } from '$lib/account';
 	import { onMount } from 'svelte';
 	import Logo from '$lib/brand/Logo.svelte';
+	import { track } from '$lib/analytics';
 
 	let darkMode = true;
 
@@ -62,8 +63,18 @@
 	<div class="flex items-center gap-3 py-3">
 		<a href="/" class="hover:no-underline" aria-label="orbbits job, home"><Logo /></a>
 		<nav class="flex rounded-full bg-slate-200/70 p-0.5 dark:bg-slate-700" aria-label="View">
-			<a href="/" class={view(!onAgent)} aria-current={!onAgent ? 'page' : undefined}>Board</a>
-			<a href="/agent" class={view(onAgent)} aria-current={onAgent ? 'page' : undefined}>
+			<a
+				href="/"
+				class={view(!onAgent)}
+				aria-current={!onAgent ? 'page' : undefined}
+				on:click={() => onAgent && track('view_switched', { to: 'board' })}>Board</a
+			>
+			<a
+				href="/agent"
+				class={view(onAgent)}
+				aria-current={onAgent ? 'page' : undefined}
+				on:click={() => !onAgent && track('view_switched', { to: 'agent' })}
+			>
 				<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor" aria-hidden="true"
 					><path d="M12 2l1.9 6.1L20 10l-6.1 1.9L12 18l-1.9-6.1L4 10l6.1-1.9z" /></svg
 				>Agent</a

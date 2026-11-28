@@ -9,6 +9,7 @@
 </script>
 
 <script lang="ts">
+	import { roleFacts, track } from '$lib/analytics';
 	import { ago, getCategory } from '$lib/board';
 	import type { Job } from '$lib/board';
 	import { setStatus, tracked } from '$lib/personal';
@@ -105,7 +106,7 @@
 											href={job.applyUrl}
 											target="_blank"
 											rel="noopener noreferrer"
-											on:click={() => setStatus(job.id, 'applied')}
+											on:click={() => { setStatus(job.id, 'applied'); track('apply_clicked', { ...roleFacts(job), source: 'saved' }); }}
 											class="btn3d btn3d-primary btn3d-sm"><span>Apply ↗</span></a
 										>
 									{/if}

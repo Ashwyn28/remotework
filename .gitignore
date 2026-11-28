@@ -5,6 +5,8 @@ node_modules
 /package
 .env
 .env.*
+# public build settings only (e.g. the PostHog project key); never secrets
+!.env.production
 .vercel
 .output
 .vscode

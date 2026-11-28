@@ -8,6 +8,7 @@
 import { browser } from '$app/env';
 import { get, writable } from 'svelte/store';
 import { EMPTY_PREFERENCES, isOnboarded } from './board';
+import { track } from './analytics';
 import type { Preferences } from './board';
 import { preferences, tracked } from './personal';
 import type { Tracked } from './personal';
@@ -139,6 +140,7 @@ export async function startAccount(): Promise<void> {
 
 export async function signInWithGoogle(credential: string): Promise<void> {
 	adopt(await request('POST', '/auth/google/', { credential }));
+	if (get(account).status === 'signed-in') track('signed_in', {});
 }
 
 /** Forget this browser's copy too, so the next person on a shared computer starts fresh. */

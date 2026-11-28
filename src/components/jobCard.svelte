@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { roleFacts, track } from '$lib/analytics';
+	import type { Source } from '$lib/analytics';
 	import { ago, getCategory, MATCH_THRESHOLD, NEW_DAYS, seniorityLabel } from '$lib/board';
 	import type { Job } from '$lib/board';
 	import { setStatus, tracked } from '$lib/personal';
@@ -9,6 +11,20 @@
 	export let job: Job;
 	/** 0–100, or null to hide the badge */
 	export let score: number | null = null;
+	/** where this card is shown, for analytics */
+	export let source: Source = 'board';
+
+	function applied() {
+		setStatus(job.id, 'applied');
+		track('apply_clicked', { ...roleFacts(job), source });
+	}
+	function toggle() {
+		open = !open;
+		if (open) {
+			const { company, industry, seniority } = roleFacts(job);
+			track('role_opened', { company, industry, seniority, source });
+		}
+	}
 
 	let open = false;
 
@@ -50,7 +66,7 @@
 				type="button"
 				class="mt-1 block w-full text-left"
 				aria-expanded={open}
-				on:click={() => (open = !open)}
+				on:click={toggle}
 			>
 				<span
 					class="block text-base font-bold text-slate-900 dark:text-white sm:text-lg"
@@ -106,11 +122,11 @@
 					href={job.applyUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					on:click={() => setStatus(job.id, 'applied')}
+					on:click={applied}
 					class="btn3d btn3d-primary btn3d-sm hidden sm:inline-block"><span>Apply</span></a
 				>
 			{/if}
-			<SaveButton jobId={job.id} />
+			<SaveButton jobId={job.id} {job} {source} />
 		</div>
 	</div>
 	{#if open}
@@ -123,7 +139,7 @@
 					href={job.applyUrl}
 					target="_blank"
 					rel="noopener noreferrer"
-					on:click={() => setStatus(job.id, 'applied')}
+					on:click={applied}
 					class="mt-3 inline-block text-sm font-semibold text-send-green hover:underline"
 					>Read the full role and apply ↗</a
 				>
@@ -135,7 +151,7 @@
 			href={job.applyUrl}
 			target="_blank"
 			rel="noopener noreferrer"
-			on:click={() => setStatus(job.id, 'applied')}
+			on:click={applied}
 			class="btn3d btn3d-primary btn3d-block mt-4 sm:hidden"><span>Apply</span></a
 		>
 	{/if}

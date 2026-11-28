@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { createEventDispatcher } from 'svelte';
+	import { createEventDispatcher, onMount } from 'svelte';
+	import { track } from '$lib/analytics';
 	import { CATEGORIES, PLACES, SENIORITIES } from '$lib/board';
 	import type { Place, Preferences, Seniority, Stage } from '$lib/board';
 	import { preferences } from '$lib/personal';
@@ -10,6 +11,7 @@
 	export let cancellable = false;
 
 	const dispatch = createEventDispatcher<{ done: Preferences; cancel: void }>();
+	onMount(() => track('personalise_started', {}));
 
 	// the board lists engineering roles only: software and infrastructure, or data and ML
 	const ENGINEERING_KINDS = [
@@ -91,6 +93,11 @@
 			minSalary
 		};
 		preferences.set(answers);
+		track('personalise_completed', {
+			industries: industries.length,
+			places: places.length,
+			kinds_of_engineering: workTypes.length
+		});
 		dispatch('done', answers);
 	};
 
