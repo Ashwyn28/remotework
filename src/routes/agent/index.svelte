@@ -599,6 +599,7 @@
 		}
 		const startLength = convo.length;
 		const startedAt = performance.now();
+		let streamed = false;
 		convo = [...convo, { role: 'user', content: [{ type: 'text', text: said }, { type: 'text', text: contextNote() }] }];
 		const texts: string[] = [];
 		let tools = 0;
@@ -625,9 +626,8 @@
 					return false;
 				}
 				if (!res.ok) throw new Error(`agent ${res.status}`);
-				data = (res.headers.get('content-type') ?? '').includes('ndjson')
-					? await readStream(res, msg, texts)
-					: await res.json();
+				streamed = (res.headers.get('content-type') ?? '').includes('ndjson');
+				data = streamed ? await readStream(res, msg, texts) : await res.json();
 				modelState = 'on';
 			} catch {
 				if (round === 0) {
@@ -664,7 +664,7 @@
 			convo = [...convo, { role: 'user', content: results }];
 			update(msg, { thinking: true, activity: '' });
 		}
-		track('agent_reply', { ms: Math.round(performance.now() - startedAt), tools, streamed: false });
+		track('agent_reply', { ms: Math.round(performance.now() - startedAt), tools, streamed });
 		update(msg, {
 			thinking: false,
 			traceTitle: tools ? `Used ${tools} tool${tools === 1 ? '' : 's'}` : '',
