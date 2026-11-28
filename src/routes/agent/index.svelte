@@ -389,7 +389,7 @@
 			profile.set(next);
 			track('cv_uploaded', { pages, details_found: details });
 			update(msg, {
-				text: `Here’s what I picked up from your CV. If anything’s wrong, tell me, for example “my email is …”.`,
+				text: `Here’s what I found. Tell me if anything’s wrong.`,
 				profileCard: next,
 				traceTitle: `Read ${file.name}`,
 				traceOpen: false
@@ -399,7 +399,7 @@
 			if (q) {
 				interview = q;
 				agentSay({
-					text: `Now a few questions most application forms ask, so I can answer them for you. ${q.ask}`,
+					text: `A few questions forms usually ask. ${q.ask}`,
 					suggestions: q.choices
 				});
 			} else await finishInterview(agentSay({}));
@@ -448,7 +448,7 @@
 		}
 		update(msg, {
 			thinking: false,
-			text: 'That’s everything most forms ask. I can now apply for you: find a role, then say “apply to the top 2” or “apply to Stripe”. I’ll show each filled form before anything goes.',
+			text: 'All set. Find a role, then say “apply to the top 2”. I’ll show each form before it goes.',
 			suggestions: ['Find roles that fit my CV', 'Show my profile']
 		});
 	}
@@ -1053,9 +1053,7 @@
 						What are you looking for?
 					</h1>
 					<p class="mt-1 text-sm text-slate-500 dark:text-slate-400 sm:mt-2 sm:text-base">
-						{#if ready && !offline}{jobs.length.toLocaleString()} open engineering roles at {companies.length}
-							UK tech companies, updated every morning.{:else if offline}The board is offline right
-							now.{:else}Loading the board…{/if}
+						{#if ready && !offline}Ask in your own words. {jobs.length.toLocaleString()} roles, updated daily.{:else if offline}The board is offline right now.{:else}Loading…{/if}
 					</p>
 					<ul class="mt-6 grid gap-3 sm:grid-cols-2">
 						{#each EXAMPLES as ex}
@@ -1080,7 +1078,7 @@
 								on:click={() => ($profile ? send('Find roles that fit my CV') : fileInput.click())}
 							>
 								<span
-									>{$profile ? 'Find roles that fit my CV' : 'Upload your CV to find roles that fit you'}</span
+									>{$profile ? 'Find roles that fit my CV' : 'Match roles to my CV'}</span
 								>
 								<span class="text-send-green" aria-hidden="true">+</span>
 							</button>
@@ -1163,9 +1161,8 @@
 											{/each}
 										</dl>
 										<p class="mt-3 text-xs text-slate-500 dark:text-slate-400">
-											Your CV stays in this browser. When you ask for roles that fit you, its text,
-											without your name, contact details or links, is sent to Claude to compare against
-											the board. It isn’t stored.
+											Stays in this browser. For matching, the text (no name or contact details) goes
+											to Claude and isn’t stored.
 										</p>
 									</div>
 								{/if}
