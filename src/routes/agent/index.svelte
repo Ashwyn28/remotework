@@ -93,6 +93,7 @@
 	let nextId = 1;
 	let toolCalls = 0;
 	let briefOpen = false;
+	let plusOpen = false;
 	let showJson = false;
 	let watches: { summary: string; brief: Brief; at: number }[] = loadWatches();
 
@@ -108,6 +109,8 @@
 	let composer: HTMLTextAreaElement;
 
 	onMount(async () => {
+		// wake the agent's Lambda while the person reads the page: it refuses a GET before any model call
+		fetch('/api/agent/', { method: 'GET', cache: 'no-store' }).catch(() => undefined);
 		const board = await loadBoard();
 		jobs = board.jobs;
 		companies = board.companies;
@@ -1091,6 +1094,8 @@
 	$: lastAgent = [...messages].reverse().find((m): m is AgentMsg => m.role === 'agent') ?? null;
 </script>
 
+<svelte:window on:keydown={(e) => e.key === 'Escape' && (plusOpen = false)} />
+
 <svelte:head>
 	<title>Agent · orbbits job</title>
 </svelte:head>
@@ -1138,7 +1143,7 @@
 					</ul>
 				</div>
 			{:else}
-				<ol class="space-y-8 pt-6">
+				<ol class="space-y-6 pt-4 sm:space-y-8 sm:pt-6">
 					{#each messages as m (m.id)}
 						{#if m.role === 'user'}
 							<li class="flex justify-end" in:fly={{ y: 6, duration: 160 }}>
@@ -1152,9 +1157,27 @@
 							<li class="space-y-4" in:fade={{ duration: 160 }}>
 								<!-- status, then a collapsed trace of what the agent did -->
 								{#if m.thinking || (m.steps.length && m.shownSteps < m.steps.length)}
-									<p class="shimmer text-sm">
-										{m.thinking ? m.activity || 'Thinking' : stepLabel(m.steps[m.shownSteps]?.tool)}…
-									</p>
+									<div class="flex items-center gap-2.5" aria-live="polite">
+										<span class="typing" aria-hidden="true"><i></i><i></i><i></i></span>
+										<span class="shimmer text-sm font-semibold"
+											>{m.thinking ? m.activity || 'Thinking' : stepLabel(m.steps[m.shownSteps]?.tool)}…</span
+										>
+									</div>
+									{#if m.thinking && /Searching|Picking|Reading your CV/.test(m.activity) && !m.hits.length}
+										<!-- where the results will land -->
+										<div class="space-y-3" aria-hidden="true">
+											{#each [0, 1] as _}
+												<div class="flex animate-pulse gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+													<div class="h-11 w-11 shrink-0 rounded-lg bg-slate-200 dark:bg-slate-700" />
+													<div class="flex-1 space-y-2 py-1">
+														<div class="h-3 w-1/3 rounded bg-slate-200 dark:bg-slate-700" />
+														<div class="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700" />
+														<div class="h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700" />
+													</div>
+												</div>
+											{/each}
+										</div>
+									{/if}
 								{:else if m.steps.length}
 									<button
 										class="flex items-center gap-1.5 text-sm text-slate-400 dark:text-slate-500 transition hover:text-slate-900 dark:hover:text-white"
@@ -1191,7 +1214,7 @@
 								{/if}
 
 								{#if m.text}
-									<p class="ph-mask whitespace-pre-line leading-7" in:fade={{ duration: 150 }}>{m.text}</p>
+									<p class="ph-mask whitespace-pre-line text-[15px] leading-6 sm:text-base sm:leading-7" in:fade={{ duration: 150 }}>{m.text}</p>
 								{/if}
 
 								{#if m.profileCard}
@@ -1360,30 +1383,31 @@
 		</div>
 	</section>
 
-	<!-- composer, with the brief attached as context -->
-	<div class="shrink-0 border-t border-slate-200 bg-canvas/95 pt-3 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 {tabBar ? 'pb-24 sm:pb-5' : 'pb-5'}">
-		<div class="mx-auto max-w-3xl px-4 sm:px-6">
+	<!-- composer, with the brief attached as context: compact, so the conversation keeps the screen -->
+	<div class="shrink-0 border-t border-slate-200 bg-canvas/95 pt-2 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 {tabBar ? 'pb-[4.75rem] sm:pb-4' : 'pb-3 sm:pb-4'}">
+		<div class="mx-auto max-w-3xl px-3 sm:px-6">
 			{#if lastAgent && lastAgent.suggestions.length && !busy}
-				<div class="mb-3 flex gap-2 overflow-x-auto pb-1" in:fade={{ duration: 150 }}>
+				<div class="no-scrollbar -mx-3 mb-2 flex gap-1.5 overflow-x-auto px-3 sm:mx-0 sm:px-0" in:fade={{ duration: 150 }}>
 					{#each lastAgent.suggestions as s}
 						<button
-							class="shrink-0 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-send-green hover:text-send-green dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300"
+							class="shrink-0 whitespace-nowrap rounded-full border border-slate-300 bg-white px-3 py-1 text-[13px] font-semibold text-slate-600 transition hover:border-send-green hover:text-send-green dark:border-slate-600 dark:bg-slate-900 dark:text-slate-300 sm:text-sm"
 							on:click={() => send(s)}>{s}</button
 						>
 					{/each}
 				</div>
 			{/if}
 			<form
-				class="rounded-2xl border border-slate-300 bg-white p-2 shadow-sm transition focus-within:border-send-green focus-within:ring-1 focus-within:ring-send-green dark:border-slate-600 dark:bg-slate-900"
+				class="relative rounded-2xl border border-slate-300 bg-white p-1.5 shadow-sm transition focus-within:border-send-green focus-within:ring-1 focus-within:ring-send-green dark:border-slate-600 dark:bg-slate-900"
 				on:submit|preventDefault={() => send(input)}
 			>
 				{#if chips.length}
-					<ul class="flex flex-wrap gap-1.5 px-2 pt-1 pb-1">
+					<!-- one swipeable line, however many criteria -->
+					<ul class="no-scrollbar flex gap-1.5 overflow-x-auto px-1.5 pb-1 pt-0.5">
 						{#each chips as c (c.field + c.value)}
-							<li transition:fade={{ duration: 120 }}>
+							<li class="shrink-0" transition:fade={{ duration: 120 }}>
 								<button
 									type="button"
-									class="flex items-center gap-1 rounded-full py-0.5 pl-2.5 pr-2 text-xs font-semibold transition hover:opacity-75 {chipClass(c)}"
+									class="flex items-center gap-1 whitespace-nowrap rounded-full py-0.5 pl-2.5 pr-2 text-xs font-semibold transition hover:opacity-75 {chipClass(c)}"
 									on:click={() => removeChip(c)}
 									disabled={busy}
 									aria-label="Remove {c.label}"
@@ -1403,39 +1427,56 @@
 					/>
 					<button
 						type="button"
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 dark:text-slate-500 transition hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
-						on:click={() => fileInput.click()}
-						disabled={busy || !ready}
-						aria-label={$profile ? 'Replace your CV' : 'Attach your CV'}
-						title={$profile ? `CV: ${$profile.cvName}` : 'Attach your CV'}
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white {plusOpen ? 'rotate-45 bg-slate-100 dark:bg-slate-700' : ''}"
+						on:click={() => (plusOpen = !plusOpen)}
+						aria-expanded={plusOpen}
+						aria-label="More: attach your CV, your profile and saved roles"
 					>
-						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-							><path d="M21 11.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.3-8.3" /></svg
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"
+							><path d="M12 5v14M5 12h14" /></svg
 						>
 					</button>
-					<button
-						type="button"
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200"
-						on:click={() => (briefOpen = true)}
-						aria-label="Your CV, saved roles and watches"
-						title="Your CV, saved roles and watches"
-					>
-						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
-							><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg
+					{#if plusOpen}
+						<div class="fixed inset-0 z-20" on:click={() => (plusOpen = false)} />
+						<div
+							class="absolute bottom-full left-0 z-30 mb-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl dark:border-slate-700 dark:bg-slate-900"
+							transition:fly|local={{ y: 6, duration: 140 }}
 						>
-					</button>
+							<button
+								type="button"
+								class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800"
+								disabled={busy || !ready}
+								on:click={() => ((plusOpen = false), fileInput.click())}
+							>
+								<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+									><path d="M21 11.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l9-9a3.7 3.7 0 0 1 5.2 5.2l-9 9a1.8 1.8 0 0 1-2.6-2.6l8.3-8.3" /></svg
+								>
+								{$profile ? 'Replace your CV' : 'Attach your CV'}
+							</button>
+							<button
+								type="button"
+								class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800"
+								on:click={() => ((plusOpen = false), (briefOpen = true))}
+							>
+								<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+									><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></svg
+								>
+								Your CV, saved roles and watches
+							</button>
+						</div>
+					{/if}
 					<textarea
 						bind:this={composer}
 						bind:value={input}
 						on:keydown={onKey}
 						rows="1"
-						placeholder={!ready ? 'Loading…' : interview ? 'Type your answer…' : 'Ask for a role, or refine…'}
-						class="max-h-40 min-h-[2.5rem] flex-1 resize-none border-0 bg-transparent px-2 py-2 text-base text-slate-900 placeholder:text-slate-400 focus:ring-0 dark:text-white sm:text-sm"
+						placeholder={!ready ? 'Loading…' : interview ? 'Type your answer…' : 'Ask for a role…'}
+						class="max-h-32 min-h-[2.25rem] flex-1 resize-none border-0 bg-transparent px-1.5 py-1.5 text-base text-slate-900 placeholder:text-slate-400 focus:ring-0 dark:text-white sm:text-sm"
 					/>
 					<button
 						type="submit"
 						disabled={busy || !ready || !input.trim()}
-						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-send-green text-white transition hover:opacity-90 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
+						class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-send-green text-white transition hover:opacity-90 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-700 dark:disabled:text-slate-500"
 						aria-label="Send"
 					>
 						<svg viewBox="0 0 20 20" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
@@ -1534,6 +1575,44 @@
 	}
 	:global(.dark) .shimmer {
 		background-image: linear-gradient(90deg, #64748b 0%, #64748b 40%, #f8fafc 50%, #64748b 60%, #64748b 100%);
+	}
+	/* three bouncing dots while the agent works */
+	.typing {
+		display: inline-flex;
+		gap: 4px;
+		padding: 8px 10px;
+		border-radius: 999px;
+		background: #ffffff;
+		border: 1.5px solid #cbd5e1;
+	}
+	:global(.dark) .typing {
+		background: #0f172a;
+		border-color: #334155;
+	}
+	.typing i {
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: #48bb78;
+		animation: typing 1s ease-in-out infinite;
+	}
+	.typing i:nth-child(2) {
+		animation-delay: 0.15s;
+	}
+	.typing i:nth-child(3) {
+		animation-delay: 0.3s;
+	}
+	@keyframes typing {
+		0%,
+		60%,
+		100% {
+			transform: translateY(0);
+			opacity: 0.5;
+		}
+		30% {
+			transform: translateY(-4px);
+			opacity: 1;
+		}
 	}
 	@keyframes shimmer {
 		from {

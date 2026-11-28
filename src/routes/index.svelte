@@ -307,7 +307,7 @@
 <span bind:this={feedTop} aria-hidden="true" />
 {#if myIndustries.length > 1}
 	<div
-		class="no-scrollbar sticky top-0 z-20 -mx-4 mb-4 flex gap-1 overflow-x-auto border-b border-slate-200 bg-canvas/95 px-4 backdrop-blur dark:border-slate-700 dark:bg-canvas-dark/95 sm:static sm:mx-0 sm:mb-5 sm:gap-2 sm:bg-transparent sm:px-0 sm:backdrop-blur-none sm:dark:bg-transparent"
+		class="no-scrollbar -mx-4 mb-4 flex gap-1 overflow-x-auto border-b border-slate-200 px-4 dark:border-slate-700 sm:mx-0 sm:mb-5 sm:gap-2 sm:bg-transparent sm:px-0 sm:backdrop-blur-none sm:dark:bg-transparent"
 		role="tablist"
 		aria-label="Your industries"
 	>
